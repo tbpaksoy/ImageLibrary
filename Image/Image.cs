@@ -2,30 +2,45 @@ using System;
 using System.Collections.Generic;
 using TahsinsLibrary.Calculation;
 using TahsinsLibrary.String;
-using System.Linq;
 namespace TahsinsLibrary
 {
-public struct Color
-{
-    public byte r,g,b,a;
-    public Color(byte r, byte g, byte b, byte a)
+    public struct Color
     {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.a = a;
+        public byte r,g,b,a;
+        public Color(byte r, byte g, byte b, byte a)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            this.a = a;
+        }
+        public override string ToString()
+        {
+            return r.ToString()+","+g.ToString()+","+b.ToString()+","+a.ToString();
+        }
     }
-    public override string ToString()
+    public struct ColorRange
     {
-        return r.ToString()+","+g.ToString()+","+b.ToString()+","+a.ToString();
+        public Color color
+        {
+            get;private set;
+        }
+        public float range;
+        public ColorRange(Color color,float range)
+        {
+            this.color = color;
+            this.range = range;
+        }
     }
-}
     public static class Image
     {
-        public static string[] Test()
+
+    public static class BMP
+    {
+            public static string[] Test()
         {
-            string[] header = BMP.CreateBMPHeader();
-            string[] colors = BMP.GenerateColorMatrix();
+            string[] header = CreateBMPHeader();
+            string[] colors = GenerateColorMatrix();
             List<string> temp = new List<string>();
             foreach(string s in header)
             {
@@ -37,8 +52,24 @@ public struct Color
             }
             return temp.ToArray();
         }
-    public static class BMP
-    {
+    public static string[] CreateData(int width,int height,Func<byte,Color> Formula)
+        {
+            List<string> data = new List<string>();
+
+            string[]header = CreateBMPHeader(width,height);
+            foreach(string s in header)
+            {
+                data.Add(s);
+            }
+            string[] colors = GenerateColorMatrix(width,GenerateColorArray(width, height, Formula));
+            foreach(string s in colors)
+            {
+                data.Add(s);
+            }
+
+            return data.ToArray();
+        }
+    }
         public static string[] CreateBMPHeader()
         {
             List<string> data = new List<string>();
@@ -47,8 +78,8 @@ public struct Color
             data.Add(CustomCalculation.GetHex("B")[0]+CustomCalculation.GetHex("M")[0]);//ok
             
 
-            CustomCalculation.Length = 8;
-            string temp = CustomCalculation.GetHex(70);
+            CustomCalculation.Length = 4;
+            string temp = CustomCalculation.GetHex(7654);
             data.Add(CustomString.ReverseGroup(temp,2));
             //ok
             CustomCalculation.Length = 4;
@@ -100,7 +131,7 @@ public struct Color
             
 
             CustomCalculation.Length = 8;
-            string temp = CustomCalculation.GetHex(54 + width * height * 3 + height * 3);
+            string temp = CustomCalculation.GetHex(54 + width * height * 3 + height * 2);
             data.Add(CustomString.ReverseGroup(temp,2));
             //ok
             CustomCalculation.Length = 4;
@@ -112,7 +143,7 @@ public struct Color
             //ok
             CustomCalculation.Length = 8;
             tempArr = CustomCalculation.GetHex(new int[]{54,40,width,height});
-                        foreach(string s in tempArr)
+            foreach(string s in tempArr)
             {
                 data.Add(CustomString.ReverseGroup(s,2));
             }
@@ -130,52 +161,35 @@ public struct Color
             {
                 data.Add(CustomString.ReverseGroup(s,2));
             }
+
             return data.ToArray();
         }
         public static string[] GenerateColorMatrix(int width,Color[] resource)
         {
             List<string> temp = new List<string>();
-            for (int i = 0,j=0; i < resource.Length; i++,j++)
+            for (int i = 0; i < resource.Length; i++)
             {
-                if(j>0 && j%width == 0)
-                {
-                CustomCalculation.Length=6;
-                temp.Add(CustomCalculation.GetHex(0));
-                j=0;
-                
-                }
+
                 CustomCalculation.Length = 2;
                 temp.Add(CustomCalculation.GetHex(resource[i].b));
                 temp.Add(CustomCalculation.GetHex(resource[i].g));
                 temp.Add(CustomCalculation.GetHex(resource[i].r));
+
+                if(i>0 && (i+1)%width == 0)
+                {
+                CustomCalculation.Length=4;
+                temp.Add(CustomCalculation.GetHex(0));
+                }
             }
-            CustomCalculation.Length=6;
-            temp.Add(CustomCalculation.GetHex(0));
+
             return temp.ToArray();
         }
-        public static string[] CreateData(int width,int height,Func<byte,Color> Formula)
-        {
-            List<string> data = new List<string>();
-
-            string[]header = CreateBMPHeader(width,height);
-            foreach(string s in header)
-            {
-                data.Add(s);
-            }
-            string[] colors = GenerateColorMatrix(width,GenerateColorArray(width, height, Formula));
-            foreach(string s in colors)
-            {
-                data.Add(s);
-            }
-
-            return data.ToArray();
-        }
-    }
+      
     
-        public static (Color[],int) GenerateColorArray(int width, int height)
+        public static Color[] GenerateColorArray(int width, int height)
         {
             Color[] colors = new Color[width * height];
-            return (colors, width);
+            return colors;
         }
         public static Color[] GenerateColorArray(int width, int height,Func<byte,Color> Formula)
         {
@@ -184,7 +198,7 @@ public struct Color
             {
                 for (int j = 0; j < width; j++,k++)
                 {
-                    colors.Add(Formula((byte)(k%256)));
+                    colors.Add(Formula((byte)(Math.Min(k,255))));
                 }
             }
 

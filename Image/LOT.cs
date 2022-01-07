@@ -162,14 +162,27 @@ namespace TahsinsLibrary.Calculation
         }
         public static byte[] ToByteArray(string[] resouce)
         {
+            /*for (int i = 16; i < resouce.Length; i++)
+            {
+                if(!(resouce[i]=="FF" || resouce[i]=="00" || resouce[i] == "000000"))
+                {
+                    Console.WriteLine(resouce[i]);
+                }
+            }*/
             List<byte>temp = new List<byte>();
             foreach(string s in resouce)
             {
                 for (int i = 0; i < s.Length/2; i++)
                 {
-                    temp.Add(byte.Parse(s.Substring(i*2,2),NumberStyles.HexNumber));
+                    byte b =(byte.Parse(s.Substring(i*2,2),NumberStyles.HexNumber));
+                    temp.Add(b);
                 }
             }
+            /*for (int i = 16; i < temp.Count; i++)
+            {
+                if(!(temp[i]==0 || temp[i]==255)) Console.WriteLine(temp[i]);
+            }*/
+
             return temp.ToArray();
         }
     }
