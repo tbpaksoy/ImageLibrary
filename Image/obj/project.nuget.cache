@@ -1,8 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "CyzCd3fMghq0TaXGzDY1V2XDS5/qyIGCtrqXCNPEQ5GJkPZsoYIzn1aLeaIqtvvy8I6o6HBPhpvNaUY33ViGUQ==",
+  "dgSpecHash": "iabCK1wBiiUWCqZL5mudQ+H56ByBlO+AYU0ZieXopVjb2GeHJ5qIY/i4Rq3n7VH1W9P10mSGwYUmfhiJMbHBNA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Tahsin\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
+    "C:\\Users\\Tahsin\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
+    "C:\\Users\\Tahsin\\.nuget\\packages\\system.codedom\\6.0.0\\system.codedom.6.0.0.nupkg.sha512",
+    "C:\\Users\\Tahsin\\.nuget\\packages\\system.management\\6.0.0\\system.management.6.0.0.nupkg.sha512",
+    "C:\\Users\\Tahsin\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
+    "C:\\Users\\Tahsin\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

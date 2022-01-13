@@ -14,3 +14,7 @@ C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.dll
 C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\ref\Image.dll
 C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.pdb
 C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.genruntimeconfig.cache
+C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\System.CodeDom.dll
+C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\System.Management.dll
+C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\runtimes\win\lib\netcoreapp3.1\System.Management.dll
+C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.csproj.CopyComplete

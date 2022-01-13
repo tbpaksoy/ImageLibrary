@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TahsinsLibrary.Array;
 using System.Globalization;
+using System.Collections;
 namespace TahsinsLibrary.String
 {
     public static partial class CustomString
@@ -184,6 +185,104 @@ namespace TahsinsLibrary.Calculation
             }*/
 
             return temp.ToArray();
+        }
+    }
+}
+namespace TahsinsLibrary.Analyze
+{
+    public static class Analyze
+    {
+        public static (List<string>,List<int>) AnalyzeByteList(List<byte> resource, bool writeToConsole = false, int writeBy = 0)
+        {
+            List<string> including = new List<string>();
+            List<int> amount = new List<int>();
+
+            including.Add(resource[0].ToString("X2"));
+            amount.Add(1);
+
+            for (int i = 1; i < resource.Count; i++)
+            {
+                if(resource[i-1]==resource[i])
+                {
+                    amount[amount.Count-1]++;
+                }
+                else
+                {
+                    including.Add(resource[i].ToString("X2"));
+                    amount.Add(1);
+                }
+            }
+            
+            if(writeToConsole)
+            {
+                for (int i = writeBy; i < including.Count; i++)
+                {
+                    Console.WriteLine(including[i]+"--"+amount[i].ToString());
+                }
+            }
+            return(including,amount);
+        }
+        public static (List<string>,List<int>) AnalyzeByteArray(byte[] resource,int analyzeBy = 0,bool writeToConsole = false,int analyzeTo = int.MaxValue)
+        {
+            List<string> including = new List<string>();
+            List<int> amount = new List<int>();
+            analyzeTo = Math.Min(resource.Length,analyzeTo);
+            including.Add(resource[analyzeBy].ToString("X2"));
+            amount.Add(1);
+
+            for (int i = analyzeBy+1; i < analyzeTo; i++)
+            {
+                if(resource[i-1]==resource[i])
+                {
+                    amount[amount.Count-1]++;
+                }
+                else
+                {
+                    including.Add(resource[i].ToString("X2"));
+                    amount.Add(1);
+                }
+            }
+            
+            if(writeToConsole)
+            {
+                for (int i = 0; i < including.Count; i++)
+                {
+                    Console.WriteLine(including[i]+"--"+amount[i].ToString());
+                }
+            }
+            return(including,amount);
+        }
+
+    }
+    public static class Compare
+    {
+        public static (bool[],int,int) CompareArrays(System.Array a, System.Array b, bool writeToConsole=false,int start = 0, int end = int.MaxValue)
+        {
+            bool[] comp = new bool[Math.Max(a.Length,b.Length)];
+            int equal = 0;
+            int notEqual = comp.Length;
+            end = Math.Min(end,comp.Length);
+            for (int i = 0; i < comp.Length; i++)
+            {
+                if(i<a.Length && i<b.Length && a.GetValue(i).Equals(b.GetValue(i)))
+                {
+                    equal++;
+                    notEqual--;
+                    comp[i]=true;
+                }
+                
+            }
+
+            if(writeToConsole)
+            {
+                for (int i = start; i < end; i++)
+                {
+                    Console.WriteLine(i.ToString("X2")+"->"+comp[i].ToString());
+                }
+                Console.WriteLine("+:"+equal.ToString()+",-:"+notEqual.ToString());
+            }
+            
+            return(comp,equal,notEqual);
         }
     }
 }

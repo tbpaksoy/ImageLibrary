@@ -18,6 +18,26 @@ namespace TahsinsLibrary
         {
             return r.ToString()+","+g.ToString()+","+b.ToString()+","+a.ToString();
         }
+        public static bool IsAllColorsSame(Color[] colors)
+        {
+            for (int i = 1; i < colors.Length; i++)
+            {
+                if(!colors[i-1].Equals(colors[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public static readonly Color red = new Color(255,0,0,255);
+        public static readonly Color green = new Color (0,255,0,255);
+        public static readonly Color blue = new Color(0,0,255,255);
+        public static readonly Color purple = new Color(128,0,128,255);
+        public static readonly Color yellow = new Color(255,255,0,255);
+        public static readonly Color lime = new Color(191,255,0,255);
+        public static readonly Color pink = new Color(255,192,203,255);
+        public static readonly Color indigo = new Color(75,0,130,255);
+        public static readonly Color navy = new Color(0,128,0,255);
     }
     public struct ColorRange
     {
@@ -37,7 +57,7 @@ namespace TahsinsLibrary
 
     public static class BMP
     {
-            public static string[] Test()
+        public static string[] Test()
         {
             string[] header = CreateBMPHeader();
             string[] colors = GenerateColorMatrix();
@@ -52,7 +72,7 @@ namespace TahsinsLibrary
             }
             return temp.ToArray();
         }
-    public static string[] CreateData(int width,int height,Func<byte,Color> Formula)
+        public static string[] CreateData(int width,int height,Func<byte,Color> Formula)
         {
             List<string> data = new List<string>();
 
@@ -69,7 +89,21 @@ namespace TahsinsLibrary
 
             return data.ToArray();
         }
-    }
+        public static string[] CreatePalette(Color[] colors, int paletteWidth, int paletteHeight, int paletteSize)
+        {
+            List<string> data = new List<string>();
+            string[] header = CreateBMPHeader(paletteWidth*paletteSize, paletteHeight*paletteSize);
+            foreach(string s in header)
+            {
+                data.Add(s);
+            }
+            string[] palette = GenerateColorMatrix(paletteWidth*paletteSize,GenerateColorPalette(colors,paletteWidth,paletteHeight,paletteSize));
+            foreach(string s in palette)
+            {
+                data.Add(s);
+            }
+            return data.ToArray();
+        }
         public static string[] CreateBMPHeader()
         {
             List<string> data = new List<string>();
@@ -111,27 +145,16 @@ namespace TahsinsLibrary
             }
             return data.ToArray();
         }
-        public static string[] GenerateColorMatrix()
-        {
-            List<string> data = new List<string>();
-            data.Add("0000FF");
-            data.Add("FFFFFF");
-            data.Add("0000");
-            data.Add("FF0000");
-            data.Add("00FF00");
-            data.Add("0000");
-            return data.ToArray();
-        }
         public static string[] CreateBMPHeader(int width, int height)
         {
                 List<string> data = new List<string>();
             CustomCalculation.Length = 2;
 
             data.Add(CustomCalculation.GetHex("B")[0]+CustomCalculation.GetHex("M")[0]);//ok
-            
 
             CustomCalculation.Length = 8;
-            string temp = CustomCalculation.GetHex(54 + width * height * 3 + height * 2);
+            int paddingCount = width * 3 % 4;
+            string temp = CustomCalculation.GetHex(54 + width * height * 3 + height * paddingCount);
             data.Add(CustomString.ReverseGroup(temp,2));
             //ok
             CustomCalculation.Length = 4;
@@ -164,23 +187,46 @@ namespace TahsinsLibrary
 
             return data.ToArray();
         }
+    }
+        
+        public static string[] GenerateColorMatrix()
+        {
+            List<string> data = new List<string>();
+            data.Add("0000FF");
+            data.Add("FFFFFF");
+            data.Add("0000");
+            data.Add("FF0000");
+            data.Add("00FF00");
+            data.Add("0000");
+            return data.ToArray();
+        }
+        
         public static string[] GenerateColorMatrix(int width,Color[] resource)
         {
             List<string> temp = new List<string>();
-            for (int i = 0; i < resource.Length; i++)
+            int height = resource.Length / width;
+            int paddingCount = width*3%4;
+            CustomCalculation.Length = 2;
+            for (int i = 0,q=0; i < height; i++)
             {
-
-                CustomCalculation.Length = 2;
-                temp.Add(CustomCalculation.GetHex(resource[i].b));
-                temp.Add(CustomCalculation.GetHex(resource[i].g));
-                temp.Add(CustomCalculation.GetHex(resource[i].r));
-
-                if(i>0 && (i+1)%width == 0)
+                for (int j = 0; j < width; j++,q++)
                 {
-                CustomCalculation.Length=4;
-                temp.Add(CustomCalculation.GetHex(0));
+                    int index = q;
+                    temp.Add(CustomCalculation.GetHex(resource[index].b));
+                    //Console.Write(" "+temp[temp.Count-1]);
+                    temp.Add(CustomCalculation.GetHex(resource[index].g));
+                    //Console.Write(temp[temp.Count-1]);
+                    temp.Add(CustomCalculation.GetHex(resource[index].r));
+                    //Console.Write(temp[temp.Count-1]+" ");
                 }
+                for (int k = 0; k < paddingCount; k++)
+                {
+                    temp.Add(CustomCalculation.GetHex(0));
+                    //Console.Write(temp[temp.Count-1]);
+                }
+                //Console.WriteLine();
             }
+            //Console.WriteLine(temp.Count);
 
             return temp.ToArray();
         }
@@ -228,6 +274,43 @@ namespace TahsinsLibrary
                 }
             }
             return newColors;
+        }
+        public static Color[] GenerateColorPalette(Color[] colors, int paletteWidth,int paletteHeight,int colorSize)
+        {
+            if(colors.Length > paletteWidth * paletteHeight)
+            {
+                throw new Exception("Palette size can not be smaller than total number of colors");
+            }
+            else
+            {
+                Color[,] palette = new Color[paletteWidth,paletteHeight];
+                for (int i = 0,k=0; i < paletteHeight; i++)
+                {
+                    for (int j = 0; j < paletteWidth; j++,k++)
+                    {
+                        if(k < colors.Length) palette[i,j] = colors[k];
+                        else break;
+                    }
+                }
+                Color[,] temp = new Color[paletteWidth*colorSize,paletteHeight*colorSize];
+                for (int i = 0; i < temp.GetLength(0); i++)
+                {
+                    for (int j = 0; j < temp.GetLength(1); j++)
+                    {
+                        int a = i / colorSize , b = j / colorSize;
+                        temp[i,j] = palette[a,b];
+                    }
+                }
+                Color[] result = new Color[temp.GetLength(0)*temp.GetLength(1)]; 
+                for (int i = 0,k=0; i < temp.GetLength(0); i++)
+                {
+                    for (int j = 0; j < temp.GetLength(1); j++,k++)
+                    {
+                        result[j*paletteWidth*colorSize+i] = temp[i,j];
+                    }
+                }
+                return result;
+            }
         }
     }
 }
