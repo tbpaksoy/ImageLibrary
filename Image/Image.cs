@@ -14,9 +14,28 @@ namespace TahsinsLibrary
             this.b = b;
             this.a = a;
         }
+        public Color(byte r, byte g, byte b)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            a = 255;
+        }
         public override string ToString()
         {
             return r.ToString()+","+g.ToString()+","+b.ToString()+","+a.ToString();
+        }
+        public string ToString(string format)
+        {
+            string result = this.ToString();
+            switch(format.ToLower())
+            {
+                case "x":
+                    result = r.ToString("X2")+","+g.ToString("X2")+","+b.ToString("X2")+","+a.ToString("X2");
+                break;
+                //TODO
+            }
+            return result;
         }
         public static bool IsAllColorsSame(Color[] colors)
         {
@@ -29,15 +48,25 @@ namespace TahsinsLibrary
             }
             return true;
         }
-        public static readonly Color red = new Color(255,0,0,255);
-        public static readonly Color green = new Color (0,255,0,255);
-        public static readonly Color blue = new Color(0,0,255,255);
-        public static readonly Color purple = new Color(128,0,128,255);
-        public static readonly Color yellow = new Color(255,255,0,255);
-        public static readonly Color lime = new Color(191,255,0,255);
-        public static readonly Color pink = new Color(255,192,203,255);
-        public static readonly Color indigo = new Color(75,0,130,255);
-        public static readonly Color navy = new Color(0,128,0,255);
+        public static readonly Color red = new Color(255,0,0);
+        public static readonly Color green = new Color (0,255,0);
+        public static readonly Color blue = new Color(0,0,255);
+        public static readonly Color purple = new Color(128,0,128);
+        public static readonly Color yellow = new Color(255,255,0);
+        public static readonly Color lime = new Color(191,255,0);
+        public static readonly Color pink = new Color(255,192,203);
+        public static readonly Color indigo = new Color(75,0,130);
+        public static readonly Color navy = new Color(0,128,0);
+        public static readonly Color white = new Color(255,255,255);
+        public static readonly Color black = new Color(0,0,0);
+        public static readonly Color aliceBlue = new Color(240,248,255);
+        public static readonly Color lavender = new Color(230,230,230);
+        public static readonly Color lightBlue = new Color(173,216,230);
+        public static readonly Color orange = new Color(255,165,0);
+        public static readonly Color gold = new Color(255,215,0);
+        public static readonly Color coral = new Color(255,127,80);
+        public static readonly Color cyan = new Color(0,255,255);
+        public static readonly Color silver = new Color(128,128,128);
     }
     public struct ColorRange
     {
@@ -187,6 +216,138 @@ namespace TahsinsLibrary
 
             return data.ToArray();
         }
+        public static string[] CreateColorTransition(Color[] from, Color[] to, int colorSize, int step)
+        {
+            List<string> data = new List<string>();
+            string[] header = CreateBMPHeader(from.Length*colorSize,(step+2)*colorSize);
+            foreach(string s in header)
+            {
+                data.Add(s);
+            }
+            string[] palette = GenerateColorMatrix(from.Length*colorSize,GenerateColorTransition(from,to,step,colorSize));
+            foreach(string s in palette)
+            {
+                data.Add(s);
+            }
+            return data.ToArray();
+        }
+    }
+    public static class PNG
+    {
+        public enum ColorType
+        {
+            Grayscale=0,TrueColor=2,Indexed=3,GrayscaleAndAlpha=4,TrueColorAndAlpha=6
+        }
+        public static string[] CreatePNGHeader()
+        {
+            List<string> data = new List<string>();
+            CustomCalculation.Length = 2;
+            data.Add("89");
+            foreach(char c in "PNG")
+            {
+               data.Add(CustomCalculation.GetHex(c)); 
+            }
+            data.Add("0D");
+            data.Add("0A");
+            data.Add("1A");
+            data.Add("0A");
+            return data.ToArray();
+        }
+        public static string[] CreateIHDRChunk(int width, int height, int bitDepth,ColorType colorType)
+        {
+            if(!CheckColorFormat(bitDepth*GetColorChannels(colorType), colorType))
+            {
+                throw new Exception("Color format not supported.");
+            }
+            List<string> data = new List<string>();
+            CustomCalculation.Length = 8;
+            foreach(string s in CustomString.Group(CustomCalculation.GetHex(13),2))
+            {
+                data.Add(s);
+            }
+            CustomCalculation.Length = 2;
+            foreach(char c in "IHDR")
+            {
+                data.Add(CustomCalculation.GetHex(c));
+            }
+            CustomCalculation.Length = 8;
+            foreach(string s in CustomString.Group(CustomCalculation.GetHex(width),2))
+            {
+                data.Add(s);
+            }
+            foreach(string s in CustomString.Group(CustomCalculation.GetHex(height),2))
+            {
+                data.Add(s);
+            }
+            CustomCalculation.Length = 2;
+            data.Add(CustomCalculation.GetHex(bitDepth));
+            data.Add(CustomCalculation.GetHex(GetColorTypeIndex(colorType)));
+            data.Add(CustomCalculation.GetHex(0));
+            data.Add(CustomCalculation.GetHex(0));
+            data.Add(CustomCalculation.GetHex(0));
+            return data.ToArray();
+        }
+        public static int GetColorTypeIndex(ColorType colorType)
+        {
+            switch(colorType)
+            {
+                case ColorType.Grayscale: return 0;
+                case ColorType.TrueColor: return 2;
+                case ColorType.Indexed: return 3;
+                case ColorType.GrayscaleAndAlpha: return 4;
+                case ColorType.TrueColorAndAlpha: return 6;
+            }
+            throw new Exception();
+        }
+        public static int GetColorChannels(ColorType colorType)
+        {
+            switch(colorType)
+            {
+                case ColorType.Grayscale:return 1;
+                case ColorType.GrayscaleAndAlpha:return 2;
+                case ColorType.Indexed:return 1;
+                case ColorType.TrueColor:return 3;
+                case ColorType.TrueColorAndAlpha:return 4;
+            }
+            return 0;
+        }
+        public static bool CheckColorFormat(int bitsPerChannel, ColorType colorType)
+        {
+            switch(colorType)
+            {
+                case ColorType.Indexed:
+                if(bitsPerChannel == 1 || bitsPerChannel == 2 || bitsPerChannel == 4 || bitsPerChannel == 8)
+                {
+                    return true;
+                }
+                break;
+                case ColorType.Grayscale:
+                if(bitsPerChannel == 1 || bitsPerChannel == 2 || bitsPerChannel == 4 || bitsPerChannel == 8 || bitsPerChannel == 16)
+                {
+                    return true;
+                }
+                break;
+                case ColorType.GrayscaleAndAlpha:
+                if(bitsPerChannel == 32 || bitsPerChannel == 16)
+                {
+                    return true;
+                }
+                break;
+                case ColorType.TrueColor:
+                if(bitsPerChannel == 24 || bitsPerChannel == 48)
+                {
+                    return true;
+                }
+                break;
+                case ColorType.TrueColorAndAlpha:
+                if(bitsPerChannel == 32 || bitsPerChannel == 64)
+                {
+                    return true;
+                }
+                break;
+            }
+            return false;
+        }
     }
         
         public static string[] GenerateColorMatrix()
@@ -284,9 +445,9 @@ namespace TahsinsLibrary
             else
             {
                 Color[,] palette = new Color[paletteWidth,paletteHeight];
-                for (int i = 0,k=0; i < paletteHeight; i++)
+                for (int i = 0,k=0; i < paletteWidth; i++)
                 {
-                    for (int j = 0; j < paletteWidth; j++,k++)
+                    for (int j = 0; j < paletteHeight; j++,k++)
                     {
                         if(k < colors.Length) palette[i,j] = colors[k];
                         else break;
@@ -307,6 +468,45 @@ namespace TahsinsLibrary
                     for (int j = 0; j < temp.GetLength(1); j++,k++)
                     {
                         result[j*paletteWidth*colorSize+i] = temp[i,j];
+                    }
+                }
+                return result;
+            }
+        }
+        public static Color[] GenerateColorTransition(Color[] from, Color[] to, int step,int colorSize)
+        {
+            if(from.Length != to.Length) throw new Exception("from and to's length have to be equal");
+            else
+            {
+                step = Math.Max(step,0);
+                Color[,] palette = new Color[from.Length,step+2];
+                for (int i = 0; i < palette.GetLength(0); i++)
+                {
+                    for (int j = 1; j < palette.GetLength(1)-1; j++)
+                    {
+                        byte r = (byte)(from[i].r+CustomCalculation.GoToValue(from[i].r,to[i].r)*(j)/(step));
+                        byte g = (byte)(from[i].g+CustomCalculation.GoToValue(from[i].g,to[i].g)*(j)/(step));
+                        byte b = (byte)(from[i].b+CustomCalculation.GoToValue(from[i].b,to[i].b)*(j)/(step));
+                        byte a = (byte)(from[i].a+CustomCalculation.GoToValue(from[i].a,to[i].a)*(j)/(step));
+                        palette[i,j] = new Color(r,g,b,a);
+                    }
+                    palette[i,step+1] = to[i];
+                    palette[i,0] = from[i];
+                }
+                Color[,] temp = new Color[palette.GetLength(0)*colorSize,palette.GetLength(1)*colorSize];
+                for (int i = 0; i < temp.GetLength(0); i++)
+                {
+                    for (int j = 0; j < temp.GetLength(1); j++)
+                    {
+                        temp[i,j] = palette[i/colorSize,j/colorSize];
+                    }
+                }
+                Color[] result = new Color[temp.GetLength(0)*temp.GetLength(1)];
+                for (int i = 0; i < temp.GetLength(0); i++)
+                {
+                    for (int j = 0; j < temp.GetLength(1); j++)
+                    {
+                        result[j*from.Length*colorSize+i] = temp[i,j];
                     }
                 }
                 return result;

@@ -88,6 +88,15 @@ namespace TahsinsLibrary.Array
             }
             return result;
         }
+        public static T[] SubArray<T>(T[] source,int index, int length)
+        {
+            T[] result = new T[length];
+            for (int i = index,j = 0; i < index+length; i++,j++)
+            {
+                result[j] = source[i];
+            }
+            return result;
+        }
     }
 }
 namespace TahsinsLibrary.Calculation
@@ -185,6 +194,30 @@ namespace TahsinsLibrary.Calculation
             }*/
 
             return temp.ToArray();
+        }
+        public static int DiffrenceAbs(int a ,int b)
+        {
+            return Math.Abs(a-b);
+        }
+        public static int Diffrence(int a, int b)
+        {
+            if(a < b)
+            return a-b;
+            else
+            return
+            a+b;
+        }
+        public static float Diffrence(float a, float b)
+        {
+            if(a < b)
+            return a-b;
+            else 
+            return a+b;
+        }
+        public static float GoToValue(float from, float to)
+        {
+            if(from >= to) return -MathF.Abs(to - from);
+            else return MathF.Abs(from - to);
         }
     }
 }
