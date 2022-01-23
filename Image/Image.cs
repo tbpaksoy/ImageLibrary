@@ -21,6 +21,20 @@ namespace TahsinsLibrary
             this.b = b;
             a = 255;
         }
+        public Color(int r, int g, int b, int a)
+        {
+            this.r = (byte) r;
+            this.g = (byte) g;
+            this.b = (byte) b;
+            this.a = (byte) a;
+        }
+        public Color(int r, int g, int b)
+        {
+            this.r = (byte)r;
+            this.g = (byte)g;
+            this.b = (byte)b;
+            a = 255;
+        }
         public override string ToString()
         {
             return r.ToString()+","+g.ToString()+","+b.ToString()+","+a.ToString();
@@ -48,6 +62,11 @@ namespace TahsinsLibrary
             }
             return true;
         }
+
+        public Color GetMidColor(Color color)
+        {
+            return new Color((r+color.r)/2,(g+color.g)/2,(b+color.b)/2,(a+color.a)/2);
+        }
         public static readonly Color red = new Color(255,0,0);
         public static readonly Color green = new Color (0,255,0);
         public static readonly Color blue = new Color(0,0,255);
@@ -67,6 +86,11 @@ namespace TahsinsLibrary
         public static readonly Color coral = new Color(255,127,80);
         public static readonly Color cyan = new Color(0,255,255);
         public static readonly Color silver = new Color(128,128,128);
+        public static readonly Color paleTurquise = new Color(175,238,238);
+        public static readonly Color turquise = new Color(64,224,208);
+        public static readonly Color mediumTurquoise = new Color(72,209,204);
+        public static readonly Color darkTurquoise = new Color(0,206,209);
+        public static readonly Color grey = new Color(128,128,128);
     }
     public struct ColorRange
     {
@@ -225,6 +249,36 @@ namespace TahsinsLibrary
                 data.Add(s);
             }
             string[] palette = GenerateColorMatrix(from.Length*colorSize,GenerateColorTransition(from,to,step,colorSize));
+            foreach(string s in palette)
+            {
+                data.Add(s);
+            }
+            return data.ToArray();
+        }
+        public static string[] CreateColorVariants(Color resource,int width,int height,int colorSize)
+        {
+            List<string> data = new List<string>();
+            string[] header = CreateBMPHeader((width+1)*colorSize,(height+1)*colorSize);
+            foreach(string s in header)
+            {
+                data.Add(s);
+            }
+            string[] palette = GenerateColorMatrix((width+1)*colorSize,GenerateColorVariants(resource,width,height,colorSize));
+            foreach(string s in palette)
+            {
+                data.Add(s);
+            }
+            return data.ToArray();
+        }
+        public static string[] CreateMidColorTable(Color[] colors,int colorSize)
+        {
+            List<string> data = new List<string>();
+            string[] header = CreateBMPHeader((colors.Length+1)*colorSize,(colors.Length+1)*colorSize);
+            foreach(string s in header)
+            {
+                data.Add(s);
+            }
+            string[] palette = GenerateColorMatrix((colors.Length+1)*colorSize,GenerateMidColorTable(colors,colorSize));
             foreach(string s in palette)
             {
                 data.Add(s);
@@ -484,10 +538,10 @@ namespace TahsinsLibrary
                 {
                     for (int j = 1; j < palette.GetLength(1)-1; j++)
                     {
-                        byte r = (byte)(from[i].r+CustomCalculation.GoToValue(from[i].r,to[i].r)*(j)/(step));
-                        byte g = (byte)(from[i].g+CustomCalculation.GoToValue(from[i].g,to[i].g)*(j)/(step));
-                        byte b = (byte)(from[i].b+CustomCalculation.GoToValue(from[i].b,to[i].b)*(j)/(step));
-                        byte a = (byte)(from[i].a+CustomCalculation.GoToValue(from[i].a,to[i].a)*(j)/(step));
+                        byte r = (byte)(from[i].r+CustomCalculation.GoToValue(from[i].r,to[i].r)*j/step);
+                        byte g = (byte)(from[i].g+CustomCalculation.GoToValue(from[i].g,to[i].g)*j/step);
+                        byte b = (byte)(from[i].b+CustomCalculation.GoToValue(from[i].b,to[i].b)*j/step);
+                        byte a = (byte)(from[i].a+CustomCalculation.GoToValue(from[i].a,to[i].a)*j/step);
                         palette[i,j] = new Color(r,g,b,a);
                     }
                     palette[i,step+1] = to[i];
@@ -511,6 +565,83 @@ namespace TahsinsLibrary
                 }
                 return result;
             }
+        }
+        public static Color[] GenerateColorVariants(Color source, int width, int height, int colorSize)
+        {
+            Color[,] palette = new Color[width + 1, height + 1];
+            for(int i = 0;i < width + 1; i++)
+            {
+                byte r = (byte)(source.r+CustomCalculation.GoToValue(source.r,Color.black.r)*i/width);
+                byte g = (byte)(source.g+CustomCalculation.GoToValue(source.g,Color.black.g)*i/width);
+                byte b = (byte)(source.b+CustomCalculation.GoToValue(source.b,Color.black.b)*i/width);
+                byte a = (byte)(source.a+CustomCalculation.GoToValue(source.a,Color.black.a)*i/width);
+                palette[i,0] = new Color(r,g,b,a);
+            }
+            for(int i = 0; i < height + 1; i++)
+            {
+                byte r = (byte)(source.r+CustomCalculation.GoToValue(source.r,Color.white.r)*i/width);
+                byte g = (byte)(source.g+CustomCalculation.GoToValue(source.g,Color.white.g)*i/width);
+                byte b = (byte)(source.b+CustomCalculation.GoToValue(source.b,Color.white.b)*i/width);
+                byte a = (byte)(source.a+CustomCalculation.GoToValue(source.a,Color.white.a)*i/width);
+                palette[0,i] = new Color(r,g,b,a);
+            }
+            for(int i = 1; i < width + 1; i++)
+            {
+                for(int j = 1; j < height + 1; j++)
+                {
+                    palette[i,j] = palette[i,0].GetMidColor(palette[0,j]);
+                }
+            }
+            Color[,] temp = new Color[palette.GetLength(0)*colorSize,palette.GetLength(1)*colorSize];
+            for (int i = 0; i < temp.GetLength(0); i++)
+            {
+                for (int j = 0; j < temp.GetLength(1); j++)
+                {
+                    temp[i,j] = palette[i/colorSize,j/colorSize];
+                }
+            }
+            Color[] result = new Color[temp.GetLength(0)*temp.GetLength(1)];
+            for (int i = 0; i < temp.GetLength(0); i++)
+            {
+                for (int j = 0; j < temp.GetLength(1); j++)
+                {
+                    result[j*(width+1)*colorSize+i] = temp[i,j];
+                }
+            }
+            return result;
+        }
+        public static Color[] GenerateMidColorTable(Color[] colors,int colorSize)
+        {
+            Color[,] palette = new Color[colors.Length+1,colors.Length+1];
+            for(int i = 1;i < colors.Length + 1; i++)
+            {
+                palette[i,0] = colors[i-1];
+                palette[0,i] = colors[i-1];
+            }
+            for(int i = 1; i < palette.GetLength(0);i++)
+            {
+                for(int j = 1; j < palette.GetLength(1);j++)
+                {
+                    palette[i,j] = palette[i,0].GetMidColor(palette[0,j]);
+                }
+            }
+            Color[,] temp = new Color[palette.GetLength(0)*colorSize,palette.GetLength(1)*colorSize];
+            for(int i = 0; i < temp.GetLength(0);i++)
+            {
+                for(int j = 0; j < temp.GetLength(1);j++)
+                {
+                    temp[i,j] = palette[i/colorSize,j/colorSize];
+                }
+            }
+            Color[] result = new Color[temp.GetLength(0)*temp.GetLength(1)];
+            for(int i = 0; i < temp.GetLength(0); i++)
+            {
+                for(int j = 0; j < temp.GetLength(1); j++)
+                {
+                    result[temp.GetLength(1)*j+i] = temp[i,j];
+                }
+            }
+            return result;
         }
     }
 }
