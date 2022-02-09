@@ -7,6 +7,10 @@ using TahsinsLibrary.Analyze;
 using TahsinsLibrary.Array;
 namespace TahsinsLibrary
 {
+    public interface IColorTurnable
+    {
+        public Color[] TurnColor();
+    }
     public interface IExportable
     {
         public string name{get; set;}
@@ -107,6 +111,7 @@ namespace TahsinsLibrary
         public static readonly Color wood = new Color(186, 140, 99);
         public static readonly Color bronze = new Color(205, 127, 50);
         public static readonly Color copper = new Color(184, 115, 51);
+        public static readonly Color sand = new Color(194,178,128);
     }
     public struct ColorRange
     {
