@@ -22,7 +22,7 @@ public class Biome
         this.name = name;
         this.color = color;
         this.overPlacable = overPlacable;
-        if(overPlacable) canPlaceCountry = false;
+        if (overPlacable) canPlaceCountry = false;
         else this.canPlaceCountry = canPlaceCountry;
     }
     public static bool IsOverWriteable(Biome biome)
@@ -42,7 +42,7 @@ public class GeoMap : IExportable, IColorTurnable
     private List<(int, int)> buffer = new List<(int, int)>();
     private bool[,] emptiness;
     private Dictionary<Biome, int> seperator = new Dictionary<Biome, int>();
-    
+
     public void FeedBiome(Frequency<Biome>[] frequencies, int width, int height, int seed)
     {
         Console.WriteLine("Feeding");
@@ -81,7 +81,7 @@ public class GeoMap : IExportable, IColorTurnable
             {
                 x = random.Next(0, biomes.GetLength(0)); y = random.Next(0, biomes.GetLength(1));
             }
-            Fill(f, x, y);
+            FillAlt(f, x, y);
             buffer.Clear();
             renewIteration = true;
         }
@@ -265,7 +265,7 @@ public class GeoMap : IExportable, IColorTurnable
         {
             return;
         }
-        for (int i = 0; i < iterationsLeft - 1 && buffer.Count > 0 - 1; i++)
+        for (int i = 0; i < iterationsLeft - 1 && buffer.Count > 0; i++)
         {
             int selected = random.Next(0, buffer.Count);
             (int, int) indexes = buffer[selected];
@@ -273,8 +273,82 @@ public class GeoMap : IExportable, IColorTurnable
             biomes[indexes.Item1, indexes.Item2] = biome.item;
             emptiness[indexes.Item1, indexes.Item2] = false;
             FillBuffer(indexes.Item1, indexes.Item2);
-
         }
+    }
+    private void FillAlt(Frequency<Biome> biome, int x, int y)
+    {
+        if (renewIteration)
+        {
+            iterationsLeft = (int)MathF.Min(biomes.Length, biome.decised);
+            renewIteration = false;
+        }
+        if (biomes[x, y] == null || biomes[x, y].overPlacable)
+        {
+            biomes[x, y] = biome.item;
+            FillBuffer(x, y);
+            emptiness[x, y] = false;
+        }
+        else
+        {
+            return;
+        }
+        int selected = random.Next(0, buffer.Count);
+        (int, int) indexes = buffer[selected];
+        Way way = (Way)random.Next(0, 4);
+        int[] counts = new int[4];
+        for (int i = 0; i < iterationsLeft - 1 && buffer.Count > 0; i++)
+        {
+            indexes = buffer[selected];
+            buffer.RemoveAt(selected);
+            biomes[indexes.Item1, indexes.Item2] = biome.item;
+            emptiness[indexes.Item1, indexes.Item2] = false;
+            FillBuffer(indexes.Item1, indexes.Item2);
+            way = (Way)random.Next(0, 4);
+            counts[(int)way]++;
+            switch (way)
+            {
+                case Way.North:
+                    selected = random.Next(0, buffer.Count);
+                    while (buffer[selected].Item1 < indexes.Item1 || IsTrapped(buffer[selected].Item1, buffer[selected].Item2))
+                    {
+                        selected = random.Next(0, buffer.Count);
+                    }
+                    break;
+                case Way.South:
+                    selected = random.Next(0, buffer.Count);
+                    while (buffer[selected].Item1 > indexes.Item1 || IsTrapped(buffer[selected].Item1, buffer[selected].Item2))
+                    {
+                        selected = random.Next(0, buffer.Count);
+                    }
+                    break;
+                case Way.West:
+                    selected = random.Next(0, buffer.Count);
+                    while (buffer[selected].Item2 < indexes.Item2 || IsTrapped(buffer[selected].Item1, buffer[selected].Item2))
+                    {
+                        selected = random.Next(0, buffer.Count);
+                    }
+                    break;
+                case Way.East:
+                    selected = random.Next(0, buffer.Count);
+                    while (buffer[selected].Item2 > indexes.Item2 || IsTrapped(buffer[selected].Item1, buffer[selected].Item2))
+                    {
+                        selected = random.Next(0, buffer.Count);
+                    }
+                    break;
+            }
+            Console.WriteLine(random.Next());
+            Console.WriteLine("D");
+        }
+    }
+    private bool IsTrapped(int x, int y)
+    {
+        bool checkBorder = x == 0 || x == biomes.GetLength(0) - 1 || y == 0 || y == biomes.GetLength(1) - 1;
+        if (checkBorder) return true;
+        bool checkAvability = biomes[x + 1, y] == null || biomes[x + 1, y].overPlacable ||
+                              biomes[x - 1, y] == null || biomes[x - 1, y].overPlacable ||
+                              biomes[x, y - 1] == null || biomes[x, y - 1].overPlacable ||
+                              biomes[x, y + 1] == null || biomes[x, y + 1].overPlacable;
+        return checkBorder && checkAvability;
     }
     private void FillBuffer(int x, int y)
     {
@@ -286,6 +360,35 @@ public class GeoMap : IExportable, IColorTurnable
             if ((biomes[x, y + 1] == null || biomes[x, y + 1].overPlacable) && !buffer.Contains((x, y + 1))) buffer.Add((x, y + 1));
         }
 
+    }
+    private int HowManyOnWayInBuffer(int x, int y, Way way)
+    {
+        Dictionary<Way, int> counts = new Dictionary<Way, int>();
+        counts.Add(Way.North, 0);
+        counts.Add(Way.South, 0);
+        counts.Add(Way.East, 0);
+        counts.Add(Way.West, 0);
+
+        foreach ((int, int) i in buffer)
+        {
+            if (i.Item1 < x)
+            {
+                counts[Way.North]++;
+            }
+            if (i.Item1 > x)
+            {
+                counts[Way.South]++;
+            }
+            if (i.Item1 < y)
+            {
+                counts[Way.East]++;
+            }
+            if (i.Item1 > y)
+            {
+                counts[Way.West]++;
+            }
+        }
+        return counts[way];
     }
     private void FillRest()
     {
@@ -339,6 +442,6 @@ public class GeoMap : IExportable, IColorTurnable
     {
         return biomes != null;
     }
-    
+
 }
-public class PoliticalMap{}
+public class PoliticalMap { }

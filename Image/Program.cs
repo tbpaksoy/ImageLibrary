@@ -69,7 +69,7 @@ class Program
                 else frequencies.Add(sandF);
             }
             map.FeedBiome(frequencies.ToArray(), 2000, 2000, 3);
-            map.Export("C://Users//Tahsin//Desktop//CGM", 100.ToString());
+            map.Export("C://Users//Tahsin//Desktop//CGM", 1060.ToString());
         }
         stopwatch.Stop();
         Console.WriteLine(stopwatch.ElapsedMilliseconds);
