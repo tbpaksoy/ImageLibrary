@@ -347,6 +347,50 @@ namespace TahsinsLibrary.Analyze
             }
             return list;
         }
+        public static List<(int, int)> EdgeDetect<T>(T item, int x, int y, T[,] source)
+        {
+            if (!source[x, y].Equals(item)) return new List<(int, int)>();
+            bool[,] isControlled = new bool[source.GetLength(0), source.GetLength(1)];
+            List<(int, int)> list = new List<(int, int)>();
+            List<(int, int)> borders = new List<(int, int)>();
+            if (x > 0 && item.Equals(source[x - 1, y])) borders.Add((x - 1, y));
+            if (x < source.GetLength(0) - 1 && item.Equals(source[x + 1, y])) borders.Add((x + 1, y));
+            if (y > 0 && item.Equals(source[x, y - 1])) borders.Add((x, y - 1));
+            if (y < source.GetLength(1) - 1 && item.Equals(source[x, y + 1])) borders.Add((x, y + 1));
+            if (source[x, y].Equals(item))
+            {
+                if (x > 0 && !item.Equals(source[x - 1, y])) list.Add((x, y));
+                else if (x < source.GetLength(0) - 1 && !item.Equals(source[x + 1, y])) list.Add((x, y));
+                else if (y > 0 && !item.Equals(source[x, y - 1])) list.Add((x, y));
+                else if (y < source.GetLength(1) - 1 && !item.Equals(source[x, y + 1])) list.Add((x, y));
+            }
+            isControlled[x, y] = true;
+            while (borders.Count > 0)
+            {
+                for (int i = 0; i < borders.Count; i++)
+                {
+                    int before = borders.Count;
+                    x = borders[0].Item1; y = borders[0].Item2;
+                    if (isControlled[x, y])
+                    {
+                        borders.RemoveAt(0);
+                        continue;
+                    }
+                    isControlled[x, y] = true;
+                    if (source[x, y].Equals(item))
+                        if (x > 0 && !item.Equals(source[x - 1, y])) list.Add((x, y));
+                        else if (x < source.GetLength(0) - 1 && !item.Equals(source[x + 1, y])) list.Add((x, y));
+                        else if (y > 0 && !item.Equals(source[x, y - 1])) list.Add((x, y));
+                        else if (y < source.GetLength(1) - 1 && !item.Equals(source[x, y + 1])) list.Add((x, y));
+                    if (x > 0 && !isControlled[x - 1, y] && item.Equals(source[x - 1, y])) borders.Add((x - 1, y));
+                    if (x < source.GetLength(0) - 1 && !isControlled[x + 1, y] && item.Equals(source[x + 1, y])) borders.Add((x + 1, y));
+                    if (y > 0 && !isControlled[x, y - 1] && item.Equals(source[x, y - 1])) borders.Add((x, y - 1));
+                    if (y < source.GetLength(1) - 1 && !isControlled[x, y + 1] && item.Equals(source[x, y + 1])) borders.Add((x, y + 1));
+                    borders.RemoveAt(0);
+                }
+            }
+            return list;
+        }
         public static List<(int, int)> GetTemp()
         {
             return temp;

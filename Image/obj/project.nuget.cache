@@ -1,15 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QjrP3sXyoGmJW9YVAXPt4/RfFi0OQ/exyCi6B3kNnEQNo97WBUCC8uaCiZ4e98bluAJAn6KFz4+/Mxgqkr97ig==",
+  "dgSpecHash": "CyzCd3fMghq0TaXGzDY1V2XDS5/qyIGCtrqXCNPEQ5GJkPZsoYIzn1aLeaIqtvvy8I6o6HBPhpvNaUY33ViGUQ==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Tahsin\\Desktop\\ImageLibrary\\Image.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\Tahsin\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
-    "C:\\Users\\Tahsin\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
-    "C:\\Users\\Tahsin\\.nuget\\packages\\system.codedom\\6.0.0\\system.codedom.6.0.0.nupkg.sha512",
-    "C:\\Users\\Tahsin\\.nuget\\packages\\system.management\\6.0.0\\system.management.6.0.0.nupkg.sha512",
-    "C:\\Users\\Tahsin\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
-    "C:\\Users\\Tahsin\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512"
-  ],
+  "projectFilePath": "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj",
+  "expectedPackageFiles": [],
   "logs": []
 }

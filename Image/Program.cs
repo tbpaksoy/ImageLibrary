@@ -1,80 +1,64 @@
 ﻿using System;
-using System.Globalization;
-using TahsinsLibrary.String;
-using TahsinsLibrary.Calculation;
 using System.Collections.Generic;
-using System.IO;
-using TahsinsLibrary;
 using TahsinsLibrary.Analyze;
-using System.Linq;
-using TahsinsLibrary.Array;
 using TahsinsLibrary.Collections;
-using System.Diagnostics;
-class Program
+namespace Image
 {
-    public static void Main(string[] args)
+    class Program
     {
+        static void Main(string[] args)
+        {
+            /*const int uv = 25;
+            bool[,] bools = new bool[uv, uv];
+            Random random = new Random();
 
-        /*
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        Random random = new Random(28634);
-        bool[,] bools = new bool[50, 50];
-        for (int i = 0; i < 50; i++)
-        {
-            for (int j = 0; j < 50; j++)
+            for (int i = 0; i < uv; i++)
             {
-                bools[i, j] = random.Next() % 2 == 0;
-            }
-        }
-        int x = random.Next(0, 50), y = random.Next(0, 50);
-        List<(int, int)> asd = Analyze.CheckAdjenctivty<bool>(bools[x, y], x, y, bools);
-        for (int i = 0; i < 50; i++)
-        {
-            for (int j = 0; j < 50; j++)
-            {
-                if (asd.Contains((i, j)))
+                for (int j = 0; j < uv; j++)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.BackgroundColor = ConsoleColor.Red;
-                    Console.Write(bools[i, j].ToString()[0] + " ");
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.BackgroundColor = ConsoleColor.Black;
-
+                    bools[i, j] = random.Next() % 2 == 0;
                 }
-                else Console.Write(bools[i, j].ToString()[0] + " ");
-
             }
-            Console.WriteLine();
-        }
-        stopwatch.Stop();
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
-        */
-
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        Random random = new Random(9);
-        Biome grass = new Biome("grass", Color.green);
-        Biome sea = new Biome("sea", Color.blue);
-        sea.overPlacable = true;
-        GeoMap map = new GeoMap();
-        Frequency<Biome> grassF = new Frequency<Biome>(grass, 10000, 400000);
-        Frequency<Biome> sandF = new Frequency<Biome>(new Biome("sand", Color.sand), 25000, 100000);
-        map.defaultBiome = sea;
-        for (int i = 0; i < 1; i++)
-        {
-            List<Frequency<Biome>> frequencies = new List<Frequency<Biome>>();
-            int iterations = random.Next(5, 31);
-            for (int j = 0; j < iterations; j++)
+            int x = random.Next(0, uv), y = random.Next(0, uv);
+            List<(int, int)> ix = Analyze.EdgeDetect<bool>(bools[x, y], x, y, bools);
+            List<(int, int)> jy = Analyze.CheckAdjenctivty<bool>(bools[x, y], x, y, bools);
+            for (int i = 0; i < uv; i++)
             {
-                if (random.Next() % 2 == 0) frequencies.Add(grassF);
-                else frequencies.Add(sandF);
-            }
-            map.FeedBiome(frequencies.ToArray(), 2000, 2000, 3);
-            map.Export("C://Users//Tahsin//Desktop//CGM", 1060.ToString());
+                for (int j = 0; j < uv; j++)
+                {
+                    if (ix.Contains((i, j)) && jy.Contains((i, j)))
+                    {
+                        Console.BackgroundColor = ConsoleColor.Blue;
+                        Console.Write(bools[i, j].ToString()[0] + " ");
+                        Console.BackgroundColor = ConsoleColor.Black;
+                    }
+                    else if (jy.Contains((i, j)) && !ix.Contains((i, j)))
+                    {
+                        Console.BackgroundColor = ConsoleColor.Red;
+                        Console.Write(bools[i, j].ToString()[0] + " ");
+                        Console.BackgroundColor = ConsoleColor.Black;
+                    }
+                    else Console.Write(bools[i, j].ToString()[0] + " ");
+                }
+                Console.WriteLine();
+            }*/
+
+            const int w = 500, h = 250;
+            Biome sea = new Biome("sea", TahsinsLibrary.Color.blue, true, false);
+            Biome land = new Biome("land", TahsinsLibrary.Color.green, false, true);
+            Biome snow = new Biome("snowy", TahsinsLibrary.Color.white, false, true);
+            PoliticalMap map = new PoliticalMap();
+            int size = w * h;
+            Frequency<Biome> landF = new Frequency<Biome>(land, size / 25, size / 10);
+            Frequency<Biome> snowyF = new Frequency<Biome>(snow, size / 25, size / 10);
+            map.defaultBiome = sea;
+            map.FeedBiome(new Frequency<Biome>[] { landF, landF, landF, landF, landF, snowyF, snowyF }, w, h, 5);
+            Country country = new Country("Red", TahsinsLibrary.Color.red);
+            Frequency<Country> redF = new Frequency<Country>(country, size / 15, size / 10, 5);
+            map.countries = new Frequency<Country>[] { redF, redF, redF };
+            map.PlaceCountries(10);
+            map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "PM0");
+
         }
-        stopwatch.Stop();
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
     }
-
 }
-
-

@@ -1,21 +1,18 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Tahsin\\Desktop\\ImageLibrary\\Image.csproj": {}
+    "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Tahsin\\Desktop\\ImageLibrary\\Image.csproj": {
+    "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Tahsin\\Desktop\\ImageLibrary\\Image.csproj",
+        "projectUniqueName": "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj",
         "projectName": "Image",
-        "projectPath": "C:\\Users\\Tahsin\\Desktop\\ImageLibrary\\Image.csproj",
+        "projectPath": "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj",
         "packagesPath": "C:\\Users\\Tahsin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Tahsin\\Desktop\\ImageLibrary\\obj\\",
+        "outputPath": "C:\\Users\\Tahsin\\Desktop\\Image\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
           "C:\\Users\\Tahsin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
@@ -42,12 +39,6 @@
       "frameworks": {
         "net5.0": {
           "targetAlias": "net5.0",
-          "dependencies": {
-            "System.Management": {
-              "target": "Package",
-              "version": "[6.0.0, )"
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -63,7 +54,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }
