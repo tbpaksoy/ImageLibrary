@@ -1,5 +1,6 @@
 #include <string>
 #include "ValueConversation.cpp"
+#include <vector>
 using namespace std;
 namespace Tahsin
 {
@@ -48,5 +49,10 @@ namespace Tahsin
                 break;
             }
         }
+    }
+
+    vector<vector<Color>> CreateColorTable()
+    {
+        
     }
 }
