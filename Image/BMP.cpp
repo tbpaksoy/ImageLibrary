@@ -5,38 +5,76 @@
 #include "ArrayOperations.cpp"
 
 using namespace std;
+const int BMPHeaderLength = 16;
+
 string *CreateBitmapInfoHeader(int width, int height)
 {
+    cout << "0";
     vector<string> temp;
     Tahsin::length = 2;
     temp.push_back(Tahsin::GetHexValue('B'));
     temp.push_back(Tahsin::GetHexValue('M'));
-    
+    cout << "0";
     Tahsin::length = 8;
     int paddingCount = width * 3 % 4;
-    string tempS = Tahsin::GetHexValue(54 + width * height * 3 + height * paddingCount);
-    string* tempSA = Tahsin::GroupAndReverse(tempS,2);
-    for (int i = 0; i < tempS.size()/2; i++)
+    string s = Tahsin::GetHexValue(54 + width * height * 3 + height * paddingCount);
+    string *sa = Tahsin::GroupAndReverse(s, 2);
+    for (int i = 0; i < s.size() / 2; i++)
     {
-        temp.push_back(tempSA[i]);
+        temp.push_back(sa[i]);
     }
+    Tahsin::length = 4;
+    sa = new string[2]{Tahsin::GetHexValue(0), Tahsin::GetHexValue(0)};
+    for (int i = 0; i < 2; i++)
+    {
+        string *reversed = Tahsin::GroupAndReverse(sa[i], 2);
+        for (int j = 0; sa[i].size() / 2; i++)
+        {
+            temp.push_back(reversed[i]);
+        }
+    }
+    cout << "0";
+    Tahsin::length = 8;
+    sa = new string[4]{Tahsin::GetHexValue(54), Tahsin::GetHexValue(40), Tahsin::GetHexValue(width), Tahsin::GetHexValue(height)};
+    for (int i = 0; i < 4; i++)
+    {
+        string *reversed = Tahsin::GroupAndReverse(sa[i], 2);
+        cout << "-" + sa[i].size() / 2;
+        for (int j = 0; sa[i].size() / 2; i++)
+        {
+            cout << "asd";
+            temp.push_back(reversed[i]);
+        }
+    }
+    cout << "0";
 
     Tahsin::length = 4;
-    string tempArr[] = {Tahsin::GetHexValue(0),Tahsin::GetHexValue(0)};
-    
+    sa = new string[2]{Tahsin::GetHexValue(1), Tahsin::GetHexValue(24)};
+    for (int i = 0; i < 2; i++)
+    {
+        string *reversed = Tahsin::GroupAndReverse(sa[i], 2);
+        for (int j = 0; sa[i].size() / 2; i++)
+        {
+            temp.push_back(reversed[i]);
+        }
+    }
+    cout << "0";
 
+    Tahsin::length = 8;
+    sa = new string[6]{Tahsin::GetHexValue(0), Tahsin::GetHexValue(16), Tahsin::GetHexValue(2835), Tahsin::GetHexValue(2835), Tahsin::GetHexValue(0), Tahsin::GetHexValue(0)};
+    for (int i = 0; i < 2; i++)
+    {
+        string *reversed = Tahsin::GroupAndReverse(sa[i], 2);
+        for (int j = 0; sa[i].size() / 2; i++)
+        {
+            temp.push_back(reversed[i]);
+        }
+    }
+    cout << "0";
     return temp.data();
 }
 int main()
 {
-    string test;
-    cin >> test;
-    int groupSize;
-    cin >> groupSize;
-    string *temp = Tahsin::GroupAndReverse(test,groupSize);
-    for (int i = 0; i < test.size()/groupSize; i++)
-    {
-        cout << temp[i] << endl;
-    }
-    
+    CreateBitmapInfoHeader(5, 5);
+    return 0;
 }

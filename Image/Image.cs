@@ -13,7 +13,7 @@ namespace TahsinsLibrary
     }
     public interface IExportable
     {
-        public string name{get; set;}
+        public string name { get; set; }
         public void Export(string path, string name);
         public bool IsReadyToExport();
     }
@@ -111,7 +111,7 @@ namespace TahsinsLibrary
         public static readonly Color wood = new Color(186, 140, 99);
         public static readonly Color bronze = new Color(205, 127, 50);
         public static readonly Color copper = new Color(184, 115, 51);
-        public static readonly Color sand = new Color(194,178,128);
+        public static readonly Color sand = new Color(194, 178, 128);
     }
     public struct ColorRange
     {
@@ -128,13 +128,13 @@ namespace TahsinsLibrary
     }
     public struct MaterialForUnity : IExportable
     {
-        public string name{get; set;}
+        public string name { get; set; }
         public Color[] albedo;
         public byte[] metallic;
         public byte[] smoothness;
         public Color[] emission;
         public int paletteSize;
-        public MaterialForUnity(string name,Color[] albedo, byte[] metallic, byte[] smoothness, Color[] emission, int paletteSize)
+        public MaterialForUnity(string name, Color[] albedo, byte[] metallic, byte[] smoothness, Color[] emission, int paletteSize)
         {
             this.name = name;
             this.albedo = albedo;
@@ -202,7 +202,7 @@ namespace TahsinsLibrary
     }
     public struct MaterialForBlender : IExportable
     {
-        public string name{get;set;}
+        public string name { get; set; }
         public Color[] baseColor;
         public byte[] metallic;
         public byte[] specular;
@@ -267,7 +267,7 @@ namespace TahsinsLibrary
                 fs.Flush();
                 fs.Close();
             }
-            if(emission != null)
+            if (emission != null)
             {
                 FileStream fs = new FileStream($"{path}\\{name}Emission.bmp", FileMode.Create);
                 byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(emission, decised, decised, paletteSize));
@@ -283,21 +283,6 @@ namespace TahsinsLibrary
 
         public static class BMP
         {
-            public static string[] Test()
-            {
-                string[] header = CreateBMPHeader();
-                string[] colors = GenerateColorMatrix();
-                List<string> temp = new List<string>();
-                foreach (string s in header)
-                {
-                    temp.Add(CustomCalculation.HexToBinary(s));
-                }
-                foreach (string s in colors)
-                {
-                    temp.Add(CustomCalculation.HexToBinary(s));
-                }
-                return temp.ToArray();
-            }
             public static string[] CreateData(int width, int height, Func<byte, Color> Formula)
             {
                 List<string> data = new List<string>();
@@ -327,47 +312,6 @@ namespace TahsinsLibrary
                 foreach (string s in palette)
                 {
                     data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateBMPHeader()
-            {
-                List<string> data = new List<string>();
-                CustomCalculation.Length = 2;
-
-                data.Add(CustomCalculation.GetHex("B")[0] + CustomCalculation.GetHex("M")[0]);//ok
-
-
-                CustomCalculation.Length = 4;
-                string temp = CustomCalculation.GetHex(7654);
-                data.Add(CustomString.ReverseGroup(temp, 2));
-                //ok
-                CustomCalculation.Length = 4;
-                string[] tempArr = CustomCalculation.GetHex(new int[] { 0, 0 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-                //ok
-                CustomCalculation.Length = 8;
-                tempArr = CustomCalculation.GetHex(new int[] { 54, 40, 2, 2 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-
-                CustomCalculation.Length = 4;
-                tempArr = CustomCalculation.GetHex(new int[] { 1, 24 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-
-                CustomCalculation.Length = 8;
-                tempArr = CustomCalculation.GetHex(new int[] { 0, 16, 2835, 2835, 0, 0 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
                 }
                 return data.ToArray();
             }
@@ -458,16 +402,16 @@ namespace TahsinsLibrary
                 }
                 return data.ToArray();
             }
-            public static string[] CreateDirectColor(Color[] colors,int width,int height)
+            public static string[] CreateDirectColor(Color[] colors, int width, int height)
             {
-                if(colors.Length != width*height) return null;
+                if (colors.Length != width * height) return null;
                 else
                 {
-                    List<string>data = new List<string>();
-                    string[] header = CreateBMPHeader(width,height);
-                    foreach(string s in header) data.Add(s);
-                    string[] colorData = Image.GenerateColorMatrix(width,colors);
-                    foreach(string s in colorData) data.Add(s);
+                    List<string> data = new List<string>();
+                    string[] header = CreateBMPHeader(width, height);
+                    foreach (string s in header) data.Add(s);
+                    string[] colorData = Image.GenerateColorMatrix(width, colors);
+                    foreach (string s in colorData) data.Add(s);
                     return data.ToArray();
                 }
             }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using TahsinsLibrary.Analyze;
 using System.IO;
 using TahsinsLibrary.Calculation;
+using System.Diagnostics;
 public class Biome
 {
     public string name { get; private set; }
@@ -44,6 +45,7 @@ public class GeoMap : IExportable, IColorTurnable
     private Dictionary<Biome, int> seperator = new Dictionary<Biome, int>();
     protected bool[,] countryLands;
     protected Country[,] ownership;
+    protected List<(int, int)> avaibleToPlaceCountry = new List<(int, int)>();
     public void FeedBiome(Frequency<Biome>[] frequencies, int width, int height, int seed)
     {
         Console.WriteLine("Feeding");
@@ -160,12 +162,14 @@ public class GeoMap : IExportable, IColorTurnable
                 output[x, y] = window[window.Length / 2];
             }
         }
+        Console.WriteLine("O" + output == null);
         biomes = output;
         for (int i = 0; i < biomes.GetLength(0); i++)
         {
             for (int j = 0; j < biomes.GetLength(1); j++)
             {
                 countryLands[i, j] = biomes[i, j] == null ? false : biomes[i, j].canPlaceCountry;
+                if (countryLands[i, j]) avaibleToPlaceCountry.Add((i, j));
             }
         }
     }
@@ -441,13 +445,14 @@ public class GeoMap : IExportable, IColorTurnable
         if (IsReadyToExport())
         {
             FileStream fs = new FileStream(path + $"//{name}.bmp", FileMode.Create);
+            Console.WriteLine("Writing");
             fs.Write((CustomCalculation.ToByteArray(TahsinsLibrary.Image.BMP.CreateDirectColor(TurnColor(), biomes.GetLength(1), biomes.GetLength(0)))));
             fs.Flush();
             fs.Close();
             Console.WriteLine("Exported");
         }
     }
-    public bool IsReadyToExport()
+    public virtual bool IsReadyToExport()
     {
         return biomes != null;
     }
@@ -463,9 +468,34 @@ public class PoliticalMap : GeoMap
 {
     private List<(int, int)> buffer = new List<(int, int)>();
     private Random random;
-    public Frequency<Country>[] countries;
+    protected Frequency<Country>[] countries;
     private Dictionary<Country, int> seperator = new Dictionary<Country, int>();
     private List<(int, int)> centers = new List<(int, int)>();
+    public int howManyFreeLandLeft
+    {
+        get
+        {
+            int result = 0;
+            foreach (bool b in countryLands)
+            {
+                if (b) result++;
+            }
+            return result;
+        }
+    }
+    public int neededLands
+    {
+        get
+        {
+            if (countries == null) return 0;
+            int result = 0;
+            foreach (Frequency<Country> country in countries)
+            {
+                result += country.min;
+            }
+            return result;
+        }
+    }
     private void DesignateAreas()
     {
         for (int i = 0; i < biomes.GetLength(0); i++)
@@ -486,17 +516,29 @@ public class PoliticalMap : GeoMap
         {
             f.DeciseCount(random.Next());
             minCountryArea += f.min;
-            if (!seperator.TryAdd(f.item, seperatorIndex)) seperatorIndex++;
+            if (seperator.TryAdd(f.item, seperatorIndex)) seperatorIndex++;
 
+        }
+        if (neededLands > howManyFreeLandLeft)
+        {
+            Console.WriteLine("Stopped due the not enough lands.");
         }
         foreach (Frequency<Country> country in countries)
         {
-            int x = random.Next(0, countryLands.GetLength(0)), y = random.Next(0, countryLands.GetLength(1));
+            int index = random.Next(0, avaibleToPlaceCountry.Count);
+            int x = avaibleToPlaceCountry[index].Item1, y = avaibleToPlaceCountry[index].Item2;
             while (!countryLands[x, y] || Analyze.CheckAdjenctivty<bool>(true, x, y, countryLands).Count < country.min)
             {
-                x = random.Next(0, countryLands.GetLength(0)); y = random.Next(0, countryLands.GetLength(1));
+                Console.Write("a");
+                avaibleToPlaceCountry.RemoveAt(index);
+                index = random.Next(0, avaibleToPlaceCountry.Count);
+                x = avaibleToPlaceCountry[index].Item1; y = avaibleToPlaceCountry[index].Item2;
             }
+            Console.WriteLine("Declaring");
+            Stopwatch stopwatch = Stopwatch.StartNew();
             DeclareLandAsCountry(country, x, y);
+            stopwatch.Stop();
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
         }
     }
     private void DeclareLandAsCountry(Frequency<Country> country, int x, int y)
@@ -545,11 +587,20 @@ public class PoliticalMap : GeoMap
                 {
                     for (int q = t + 1; q < window.Length; q++)
                     {
-                        if (seperator[window[t]] < seperator[window[q]])
+                        if (window[t] == null || window[q] == null)
                         {
                             Country temp = window[t];
                             window[t] = window[q];
                             window[q] = temp;
+                        }
+                        else
+                        {
+                            if (seperator[window[t]] < seperator[window[q]])
+                            {
+                                Country temp = window[t];
+                                window[t] = window[q];
+                                window[q] = temp;
+                            }
                         }
                     }
                 }
@@ -576,6 +627,26 @@ public class PoliticalMap : GeoMap
         int count = 0;
         foreach (bool b in countryLands) if (b) count++;
         return count;
+    }
+    public override bool IsReadyToExport()
+    {
+        return base.IsReadyToExport();
+    }
+    public void FeedCountries(params Frequency<Country>[] countries)
+    {
+        this.countries = countries;
+    }
+    public void FeedCountries(Country[] countries, (int, int)[] frequencies)
+    {
+        if (countries.Length == frequencies.Length)
+        {
+            this.countries = new Frequency<Country>[countries.Length];
+            for (int i = 0; i < countries.Length; i++)
+            {
+                this.countries[i] = new Frequency<Country>(countries[i], Math.Min(frequencies[i].Item1, frequencies[i].Item2), Math.Max(frequencies[i].Item1, frequencies[i].Item2));
+            }
+        }
+        else Console.WriteLine("Can not feed due the arrays length not same.");
     }
 }
 public class Country

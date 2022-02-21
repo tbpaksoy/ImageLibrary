@@ -44,5 +44,14 @@ namespace Tahsin
         string *result = ReverseGroup(temp,source.size()/length);
         return result;
     }
+    string UniteGroup(string source[])
+    {
+        string result = NULL;
+        for(int i = 0; i < result.size(); i++)
+        {
+            result += source[i];
+        }
+        return result;
+    }
 
 }

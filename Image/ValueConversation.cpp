@@ -19,6 +19,17 @@ namespace Tahsin
         }
         return false;
     }
+    bool IsAcceptable(string s)
+    {
+        for (int i = 0; i < s.size(); i++)
+        {
+            if (!IsAcceptable(s[i]))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     string FormatString(string s)
     {

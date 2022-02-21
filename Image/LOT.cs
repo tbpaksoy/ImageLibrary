@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using TahsinsLibrary.Array;
 using System.Globalization;
-
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 namespace TahsinsLibrary
 {
     public enum Way
@@ -344,6 +345,61 @@ namespace TahsinsLibrary.Analyze
                         if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
                     }
                 }
+            }
+            return list;
+        }
+        public static List<(int, int)> CheckAdjenctivtyParallel<T>(T item, int x, int y, T[,] source)
+        {
+            bool[,] isChecked = new bool[source.GetLength(0), source.GetLength(1)];
+            List<(int, int)> list = new List<(int, int)>();
+            ConcurrentBag<(int, int)> concurrent = new ConcurrentBag<(int, int)>();
+            ConcurrentBag<(int, int)> borders = new ConcurrentBag<(int, int)>();
+            list.Add((x, y));
+            if (x > 0 && item.Equals(source[x - 1, y])) borders.Add((x - 1, y));
+            if (x < source.GetLength(1) - 1 && item.Equals(source[x + 1, y])) borders.Add((x + 1, y));
+            if (y > 0 && item.Equals(source[x, y - 1])) borders.Add((x, y - 1));
+            if (y < source.GetLength(1) - 1 && item.Equals(source[x, y + 1])) borders.Add((x, y + 1));
+            while (borders.Count > 0)
+            {
+                /*for (int j = 0; j < borders.Count; j++)
+                {
+                    (int, int) i = borders[j];
+                    if (isChecked[i.Item1, i.Item2])
+                    {
+                        borders.RemoveAt(j);
+                        j--;
+                        continue;
+                    }
+                    borders.Remove(i);
+                    isChecked[i.Item1, i.Item2] = true;
+                    if (source[i.Item1, i.Item2].Equals(item))
+                    {
+                        list.Add(i);
+                        if (i.Item1 > 0 && isChecked[i.Item1 - 1, i.Item2] == false) borders.Add((i.Item1 - 1, i.Item2));
+                        if (i.Item1 < source.GetLength(0) - 1 && isChecked[i.Item1 + 1, i.Item2] == false) borders.Add((i.Item1 + 1, i.Item2));
+                        if (i.Item2 > 0 && isChecked[i.Item1, i.Item2 - 1] == false) borders.Add((i.Item1, i.Item2 - 1));
+                        if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
+                    }
+                }*/
+                Parallel.ForEach(borders, j =>
+                 {
+                     if (!isChecked[j.Item1, j.Item2] && borders.TryPeek(out (int, int) i))
+                     {
+                         isChecked[i.Item1, i.Item2] = true;
+                         if (source[i.Item1, i.Item2].Equals(item))
+                         {
+                             concurrent.Add(i);
+                             if (i.Item1 > 0 && isChecked[i.Item1 - 1, i.Item2] == false) borders.Add((i.Item1 - 1, i.Item2));
+                             if (i.Item1 < source.GetLength(0) - 1 && isChecked[i.Item1 + 1, i.Item2] == false) borders.Add((i.Item1 + 1, i.Item2));
+                             if (i.Item2 > 0 && isChecked[i.Item1, i.Item2 - 1] == false) borders.Add((i.Item1, i.Item2 - 1));
+                             if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
+                         }
+                     }
+                 });
+                Parallel.ForEach(concurrent, indexes =>
+                {
+                    list.Add(indexes);
+                });
             }
             return list;
         }
