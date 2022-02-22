@@ -4,6 +4,7 @@ using TahsinsLibrary.Calculation;
 using TahsinsLibrary.String;
 using System.IO;
 using TahsinsLibrary.Analyze;
+using System.Globalization;
 using TahsinsLibrary.Array;
 namespace TahsinsLibrary
 {
@@ -20,6 +21,61 @@ namespace TahsinsLibrary
     public struct Color
     {
         public byte r, g, b, a;
+        public string hex
+        {
+            get
+            {
+                return r.ToString("X2") + g.ToString("X2") + b.ToString("X2") + a.ToString("X2");
+            }
+            set
+            {
+                if (value.Length == 8 && CustomString.IsHex(value))
+                {
+                    r = byte.Parse(value.Substring(0, 2), NumberStyles.HexNumber);
+                    g = byte.Parse(value.Substring(2, 2), NumberStyles.HexNumber);
+                    b = byte.Parse(value.Substring(4, 2), NumberStyles.HexNumber);
+                    a = byte.Parse(value.Substring(6, 2), NumberStyles.HexNumber);
+                }
+            }
+        }
+        public Color negative
+        {
+            get
+            {
+                return new Color(255 - r, 255 - g, 255 - b, a);
+            }
+        }
+        public Color greyScaleAvarage
+        {
+            get
+            {
+                int value = (r + g + b) / 3;
+                return new Color(value, value, value, a);
+            }
+        }
+        public Color(string hex)
+        {
+            r = g = b = a = 0;
+            if (hex != null && CustomString.IsHex(hex))
+            {
+                switch (hex.Length)
+                {
+                    case 6:
+                        r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+                        g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+                        b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+                        a = 255;
+                        break;
+                    case 8:
+                        r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+                        g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+                        b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+                        a = byte.Parse(hex.Substring(6, 2), NumberStyles.HexNumber);
+                        break;
+                }
+            }
+            else Console.WriteLine("Due the wrong format all values (r,g,b,a) set to 0.");
+        }
         public Color(byte r, byte g, byte b, byte a)
         {
             this.r = r;
@@ -79,6 +135,43 @@ namespace TahsinsLibrary
         public Color GetMidColor(Color color)
         {
             return new Color((r + color.r) / 2, (g + color.g) / 2, (b + color.b) / 2, (a + color.a) / 2);
+        }
+        public static Color GetMildColor(Color a, Color b)
+        {
+            return a.GetMidColor(b);
+        }
+        public void GetFromHex(string hex)
+        {
+            if (hex != null)
+            {
+                switch (hex.Length)
+                {
+                    case 2:
+                        r = byte.Parse(hex, NumberStyles.HexNumber);
+                        break;
+                    case 4:
+                        r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+                        g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+                        break;
+                    case 6:
+                        r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+                        g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+                        b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+                        break;
+                    case 8:
+                        r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+                        g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+                        b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+                        a = byte.Parse(hex.Substring(6, 2), NumberStyles.HexNumber);
+                        break;
+                }
+            }
+        }
+        public static Color FromHex(string hex)
+        {
+            Color color = new Color();
+            if (hex.Length == 8) color.hex = hex;
+            return color;
         }
         public static readonly Color red = new Color(255, 0, 0);
         public static readonly Color green = new Color(0, 255, 0);

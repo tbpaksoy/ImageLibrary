@@ -12,8 +12,6 @@ namespace Program
     {
         static void Main(string[] args)
         {
-            ThreadPool.GetMinThreads(out int w, out int c);
-            ThreadPool.SetMinThreads(w, c);
             /*const int uv = 25;
             bool[,] bools = new bool[uv, uv];
             Random random = new Random();
@@ -48,7 +46,8 @@ namespace Program
                 }
                 Console.WriteLine();
             }*/
-            const int width = 400, height = 300;
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            const int width = 1500, height = 1500;
             Biome sea = new Biome("sea", TahsinsLibrary.Color.blue, true, false);
             Biome land = new Biome("land", TahsinsLibrary.Color.green, false, true);
             Biome snow = new Biome("snowy", TahsinsLibrary.Color.white, false, true);
@@ -71,7 +70,10 @@ namespace Program
             Frequency<Country> brdrF = new Frequency<Country>(burdur, freeLand / 10, freeLand / 8);
             map.FeedCountries(redF, redF, chorumF, brdrF);
             map.PlaceCountries(10);
-            map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "burdur");
+            map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "burdur1");
+            stopwatch.Stop();
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+
             /*
             foreach (string s in TahsinsLibrary.Image.BMP.CreateBMPHeader(50, 50))
             {

@@ -15,7 +15,7 @@ namespace TahsinsLibrary.String
 {
     public static partial class CustomString
     {
-
+        private const string hexDigits = "0123456789ABCDEFabcdef";
         public static string Reverse(string resource)
         {
             if (resource != null)
@@ -81,6 +81,21 @@ namespace TahsinsLibrary.String
                 }
             }
             return new string(temp);
+        }
+        public static bool IsHex(string s)
+        {
+            foreach (char c in s)
+            {
+                if (!s.Contains(c)) return false;
+            }
+            return true;
+        }
+        public static string RemoveSpacesAtBeginingAndEnding(string s)
+        {
+            string result = s;
+            while (s.StartsWith(" ")) s = s.Substring(1);
+            while (s.EndsWith(" ")) s = s.Substring(0, s.Length - 1);
+            return result;
         }
     }
 }

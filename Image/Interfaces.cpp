@@ -32,21 +32,34 @@ namespace Tahsin
     {
     protected:
         int size;
-
     public:
         IColorTurnable();
-        virtual Color *TurnColor();
+        virtual vector<vector<Color>> GetColorVector();
         int GetSize();
     };
 
     IColorTurnable::IColorTurnable()
     {
     }
-    Color *IColorTurnable::TurnColor()
-    {
-    }
     int IColorTurnable::GetSize()
     {
         return size;
     }
+    vector<vector<Color>> IColorTurnable::GetColorVector()
+    {
+        
+    }
+    class IGetInfoString
+    {
+    public:
+        IGetInfoString();
+        virtual string GetInfo();
+    };
+    string IGetInfoString::GetInfo()
+    {
+        
+    }
+    IGetInfoString::IGetInfoString()
+    {
+    } 
 }

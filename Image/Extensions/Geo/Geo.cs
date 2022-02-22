@@ -540,6 +540,7 @@ public class PoliticalMap : GeoMap
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
         }
+        Console.WriteLine("All countries placed");
     }
     private void DeclareLandAsCountry(Frequency<Country> country, int x, int y)
     {
