@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using TahsinsLibrary.Analyze;
 using TahsinsLibrary.Collections;
 using TahsinsLibrary;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Diagnostics;
+using TahsinsLibrary.Calculation;
+using System.IO;
 namespace Program
 {
     class Program
@@ -70,10 +70,15 @@ namespace Program
             Frequency<Country> brdrF = new Frequency<Country>(burdur, freeLand / 10, freeLand / 8);
             map.FeedCountries(redF, redF, chorumF, brdrF);
             map.PlaceCountries(10);
-            map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "burdur1");
+            map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "ad64asd46");
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
+            /*
+            byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreateColorVariants(new Color("9B1E48"), 10, 10, 30));
+            FileStream fs = new FileStream(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\firatV.bmp", FileMode.CreateNew);
+            fs.Write(data);
+            fs.Flush();
+            fs.Close();*/
             /*
             foreach (string s in TahsinsLibrary.Image.BMP.CreateBMPHeader(50, 50))
             {

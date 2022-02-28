@@ -349,6 +349,40 @@ namespace TahsinsLibrary.Analyze
                 for (int j = 0; j < borders.Count; j++)
                 {
                     (int, int) i = borders[j];
+                    if (isChecked[i.Item1, i.Item2])
+                    {
+                        borders.RemoveAt(j);
+                        continue;
+                    }
+                    borders.RemoveAt(j);
+                    isChecked[i.Item1, i.Item2] = true;
+                    if (source[i.Item1, i.Item2].Equals(item) && !isChecked[i.Item1, i.Item2])
+                    {
+                        list.Add(i);
+                        if (i.Item1 > 0 && isChecked[i.Item1 - 1, i.Item2] == false) borders.Add((i.Item1 - 1, i.Item2));
+                        if (i.Item1 < source.GetLength(0) - 1 && isChecked[i.Item1 + 1, i.Item2] == false) borders.Add((i.Item1 + 1, i.Item2));
+                        if (i.Item2 > 0 && isChecked[i.Item1, i.Item2 - 1] == false) borders.Add((i.Item1, i.Item2 - 1));
+                        if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
+                    }
+                }
+            }
+            return list;
+        }
+        public static List<(int, int)> CheckAdjenctivty<T>(T item, int x, int y, T[,] source, int limit)
+        {
+            bool[,] isChecked = new bool[source.GetLength(0), source.GetLength(1)];
+            List<(int, int)> list = new List<(int, int)>();
+            List<(int, int)> borders = new List<(int, int)>();
+            list.Add((x, y));
+            if (x > 0 && item.Equals(source[x - 1, y])) borders.Add((x - 1, y));
+            if (x < source.GetLength(1) - 1 && item.Equals(source[x + 1, y])) borders.Add((x + 1, y));
+            if (y > 0 && item.Equals(source[x, y - 1])) borders.Add((x, y - 1));
+            if (y < source.GetLength(1) - 1 && item.Equals(source[x, y + 1])) borders.Add((x, y + 1));
+            while (borders.Count > 0 && limit > 0)
+            {
+                for (int j = 0; j < borders.Count; j++, limit--)
+                {
+                    (int, int) i = borders[j];
                     borders.Remove(i);
                     isChecked[i.Item1, i.Item2] = true;
                     if (source[i.Item1, i.Item2].Equals(item))
@@ -462,6 +496,26 @@ namespace TahsinsLibrary.Analyze
             }
             return list;
         }
+        public static int CountAdjencts(List<(int, int)> list, int x, int y)
+        {
+            (int, int) length = Compare.Max(list);
+            bool[,] table = new bool[length.Item1, length.Item2];
+            foreach ((int, int) i in list)
+            {
+                table[i.Item1, i.Item2] = true;
+            }
+            return CheckAdjenctivty<bool>(true, x, y, table).Count;
+        }
+        public static List<(int, int)> GetSubAdjenctList(List<(int, int)> list, int x, int y)
+        {
+            (int, int) length = Compare.Max(list);
+            bool[,] table = new bool[length.Item1, length.Item2];
+            foreach ((int, int) i in list)
+            {
+                table[i.Item1, i.Item2] = true;
+            }
+            return CheckAdjenctivty<bool>(true, x, y, table);
+        }
         public static List<(int, int)> GetTemp()
         {
             return temp;
@@ -517,6 +571,32 @@ namespace TahsinsLibrary.Analyze
                 if (i > result) result = i;
             }
             return result;
+        }
+        public static (int, int) Max(List<(int, int)> list)
+        {
+            List<int> first = new List<int>();
+            List<int> second = new List<int>();
+            foreach ((int, int) i in list)
+            {
+                first.Add(i.Item1);
+                second.Add(i.Item2);
+            }
+            return (Max(first.ToArray()), Max(second.ToArray()));
+        }
+        public static bool IsSubList(List<(int, int)> list, List<(int, int)> toControl)
+        {
+            if (list.Count < toControl.Count) return false;
+            (int, int) l1 = Max(list), l2 = Max(toControl), final = (Max(l1.Item1, l2.Item1), Max(l1.Item2, l2.Item2));
+            bool[,] checkTable = new bool[final.Item1, final.Item2];
+            foreach ((int, int) i in list)
+            {
+                checkTable[i.Item1, i.Item2] = true;
+            }
+            foreach ((int, int) i in toControl)
+            {
+                if (!checkTable[i.Item1, i.Item2]) return false;
+            }
+            return true;
         }
     }
 }

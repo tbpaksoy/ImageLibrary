@@ -33,6 +33,7 @@ public class Biome
 }
 public class GeoMap : IExportable, IColorTurnable
 {
+
     private Random random;
     public readonly Biome blank = new Biome("blank", Color.black);
     public Biome defaultBiome;
@@ -471,6 +472,7 @@ public class PoliticalMap : GeoMap
     protected Frequency<Country>[] countries;
     private Dictionary<Country, int> seperator = new Dictionary<Country, int>();
     private List<(int, int)> centers = new List<(int, int)>();
+    private List<PoliticalParcel> parcels = new List<PoliticalParcel>();
     public int howManyFreeLandLeft
     {
         get
@@ -498,16 +500,35 @@ public class PoliticalMap : GeoMap
     }
     private void DesignateAreas()
     {
-        for (int i = 0; i < biomes.GetLength(0); i++)
+        Console.WriteLine("Designating");
+        bool[,] table = new bool[biomes.GetLength(0), biomes.GetLength(1)];
+        int passed = 0;
+        for (int i = 0; i < table.GetLength(0); i++)
         {
-            for (int j = 0; j < biomes.GetLength(1); j++)
+            for (int j = 0; j < table.GetLength(1); j++)
             {
-                countryLands[i, j] = biomes[i, j] == null ? false : biomes[i, j].canPlaceCountry;
+                if (!table[i, j])
+                {
+                    List<(int, int)> temp = Analyze.CheckAdjenctivty<bool>(countryLands[i, j], i, j, countryLands);
+                    passed += temp.Count;
+                    foreach ((int, int) x in temp)
+                    {
+                        table[x.Item1, x.Item2] = true;
+                    }
+                    if (countryLands[temp[0].Item1, temp[0].Item2])
+                    {
+                        PoliticalParcel parcel = new PoliticalParcel(temp);
+                        parcels.Add(parcel);
+                    }
+                }
+                else Console.WriteLine("S");
             }
         }
+        Console.WriteLine("Designated");
     }
     public void PlaceCountries(int seed)
     {
+        DesignateAreas();
         random = new Random(seed);
         Console.WriteLine("Placing countries");
         int minCountryArea = 0;
@@ -525,18 +546,31 @@ public class PoliticalMap : GeoMap
         }
         foreach (Frequency<Country> country in countries)
         {
-            int index = random.Next(0, avaibleToPlaceCountry.Count);
-            int x = avaibleToPlaceCountry[index].Item1, y = avaibleToPlaceCountry[index].Item2;
-            while (!countryLands[x, y] || Analyze.CheckAdjenctivty<bool>(true, x, y, countryLands).Count < country.min)
+            int x = 0, y = 0;
+            PoliticalParcel parcel = parcels[random.Next(0, parcels.Count)];
+            /*while (!countryLands[x, y] || Analyze.CheckAdjenctivty<bool>(true, x, y, countryLands).Count < country.min)
             {
                 Console.Write("a");
                 avaibleToPlaceCountry.RemoveAt(index);
                 index = random.Next(0, avaibleToPlaceCountry.Count);
                 x = avaibleToPlaceCountry[index].Item1; y = avaibleToPlaceCountry[index].Item2;
+            }*/
+            int attempts = 0;
+            while (parcel.isEmpty)
+            {
+                attempts++;
+                Console.WriteLine("Decising");
+                if (parcels.Count == 0) break;
+                if (parcel.isEmpty) parcels.Remove(parcel);
+                parcel = parcels[random.Next(0, parcels.Count)];
             }
+            Console.WriteLine("Decised");
+            if (parcels.Count == 0) break;
+            (int, int) index = parcel.getIndexes[random.Next(0, parcel.getIndexes.Length)];
+            x = index.Item1; y = index.Item2;
             Console.WriteLine("Declaring");
             Stopwatch stopwatch = Stopwatch.StartNew();
-            DeclareLandAsCountry(country, x, y);
+            DeclareLandAsCountry(country, parcel);
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
         }
@@ -566,6 +600,56 @@ public class PoliticalMap : GeoMap
             ownership[x, y] = country.item;
             countryLands[x, y] = false;
             buffer.RemoveAt(index);
+        }
+    }
+    private void DeclareLandAsCountry(Frequency<Country> country, PoliticalParcel parcel)
+    {
+        bool[,] table = new bool[biomes.GetLength(0), biomes.GetLength(1)];
+        foreach ((int, int) i in parcel.getIndexes)
+        {
+            table[i.Item1, i.Item2] = true;
+        }
+        int index = random.Next(0, parcel.getIndexes.Length);
+        (int, int) chosen = parcel.getIndexes[index];
+        centers.Add(chosen);
+        int decised = Math.Min(country.decised, parcel.getIndexes.Length);
+        ownership[chosen.Item1, chosen.Item2] = country.item;
+        List<(int, int)> buffer = new List<(int, int)>();
+        List<(int, int)> temp = new List<(int, int)>();
+        int x = chosen.Item1, y = chosen.Item2;
+        countryLands[x, y] = false;
+        table[x, y] = false;
+        if (x > 0 && !table[x - 1, y]) buffer.Add((x - 1, y));
+        if (x < ownership.GetLength(0) - 1 && !table[x + 1, y]) buffer.Add((x + 1, y));
+        if (y > 0 && !table[x, y - 1]) buffer.Add((x, y - 1));
+        if (y < ownership.GetLength(1) - 1 && !table[x, y + 1]) buffer.Add((x, y + 1));
+        Console.WriteLine(buffer.Count);
+        for (int i = 0, attempts = 0; i < decised; i++, attempts++)
+        {
+            if (attempts > decised) Console.Write("W!");
+            index = random.Next(0, buffer.Count);
+            chosen = buffer[index];
+            x = chosen.Item1; y = chosen.Item2;
+            if (!table[x, y] || !countryLands[x, y])
+            {
+                i--;
+                continue;
+            }
+            if (x > 0 && table[x - 1, y]) buffer.Add((x - 1, y));
+            if (x < ownership.GetLength(0) - 1 && table[x + 1, y]) buffer.Add((x + 1, y));
+            if (y > 0 && table[x, y - 1]) buffer.Add((x, y - 1));
+            if (y < ownership.GetLength(1) - 1 && table[x, y + 1]) buffer.Add((x, y + 1));
+            ownership[chosen.Item1, chosen.Item2] = country.item;
+            buffer.RemoveAt(index);
+            countryLands[x, y] = false;
+            table[x, y] = false;
+            temp.Add(chosen);
+        }
+        Console.WriteLine();
+        parcel.RemoveFromParcel(temp);
+        foreach (PoliticalParcel newParcel in parcel.SplitParcel())
+        {
+            parcels.Add(newParcel);
         }
     }
     private void MedianSmooth(int width, int height)
