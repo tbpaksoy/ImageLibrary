@@ -46,7 +46,7 @@ namespace Program
                 }
                 Console.WriteLine();
             }*/
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            /*Stopwatch stopwatch = Stopwatch.StartNew();
             const int width = 1500, height = 1500;
             Biome sea = new Biome("sea", TahsinsLibrary.Color.blue, true, false);
             Biome land = new Biome("land", TahsinsLibrary.Color.green, false, true);
@@ -72,7 +72,8 @@ namespace Program
             map.PlaceCountries(10);
             map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "ad64asd46");
             stopwatch.Stop();
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);*/
+            Console.WriteLine(Color.GetColorFromLibrary("blue"));
             /*
             byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreateColorVariants(new Color("9B1E48"), 10, 10, 30));
             FileStream fs = new FileStream(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\firatV.bmp", FileMode.CreateNew);
