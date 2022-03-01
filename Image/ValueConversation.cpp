@@ -63,6 +63,10 @@ namespace Tahsin
         stringstream ss;
         ss << hex << value;
         string result = ss.str();
+        while (result.size() < length)
+        {
+            result = "0" + result;
+        }
         return result;
     }
     int GetDecimalValue(string s)
@@ -86,4 +90,5 @@ namespace Tahsin
             throw invalid_argument("Invalid string size:" + s.size());
         }
     }
+    
 }

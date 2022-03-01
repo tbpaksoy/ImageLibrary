@@ -646,19 +646,6 @@ namespace TahsinsLibrary
             }
 
         }
-
-        public static string[] GenerateColorMatrix()
-        {
-            List<string> data = new List<string>();
-            data.Add("0000FF");
-            data.Add("FFFFFF");
-            data.Add("0000");
-            data.Add("FF0000");
-            data.Add("00FF00");
-            data.Add("0000");
-            return data.ToArray();
-        }
-
         public static string[] GenerateColorMatrix(int width, Color[] resource)
         {
             List<string> temp = new List<string>();
@@ -687,13 +674,6 @@ namespace TahsinsLibrary
             //Console.WriteLine(temp.Count);
 
             return temp.ToArray();
-        }
-
-
-        public static Color[] GenerateColorArray(int width, int height)
-        {
-            Color[] colors = new Color[width * height];
-            return colors;
         }
         public static Color[] GenerateColorArray(int width, int height, Func<byte, Color> Formula)
         {

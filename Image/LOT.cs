@@ -359,10 +359,10 @@ namespace TahsinsLibrary.Analyze
                     if (source[i.Item1, i.Item2].Equals(item) && !isChecked[i.Item1, i.Item2])
                     {
                         list.Add(i);
-                        if (i.Item1 > 0 && isChecked[i.Item1 - 1, i.Item2] == false) borders.Add((i.Item1 - 1, i.Item2));
-                        if (i.Item1 < source.GetLength(0) - 1 && isChecked[i.Item1 + 1, i.Item2] == false) borders.Add((i.Item1 + 1, i.Item2));
-                        if (i.Item2 > 0 && isChecked[i.Item1, i.Item2 - 1] == false) borders.Add((i.Item1, i.Item2 - 1));
-                        if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
+                        if (i.Item1 > 0 && !isChecked[i.Item1 - 1, i.Item2]) borders.Add((i.Item1 - 1, i.Item2));
+                        if (i.Item1 < source.GetLength(0) - 1 && !isChecked[i.Item1 + 1, i.Item2]) borders.Add((i.Item1 + 1, i.Item2));
+                        if (i.Item2 > 0 && !isChecked[i.Item1, i.Item2 - 1]) borders.Add((i.Item1, i.Item2 - 1));
+                        if (i.Item2 < source.GetLength(1) - 1 && !isChecked[i.Item1, i.Item2 + 1]) borders.Add((i.Item1, i.Item2 + 1));
                     }
                 }
             }

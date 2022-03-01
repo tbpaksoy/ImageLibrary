@@ -13,6 +13,13 @@ public abstract class Parcel<T>
     {
         get { return indexes.ToArray(); }
     }
+    public int size
+    {
+        get
+        {
+            return indexes.Count;
+        }
+    }
     public abstract void AddToParcel(List<(int, int)> indexes);
     public abstract void RemoveFromParcel(List<(int, int)> indexes);
     public abstract List<Parcel<T>> SplitParcel();

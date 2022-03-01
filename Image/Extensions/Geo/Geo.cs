@@ -510,6 +510,7 @@ public class PoliticalMap : GeoMap
                 if (!table[i, j])
                 {
                     List<(int, int)> temp = Analyze.CheckAdjenctivty<bool>(countryLands[i, j], i, j, countryLands);
+                    Console.Write(temp.Count);
                     passed += temp.Count;
                     foreach ((int, int) x in temp)
                     {
@@ -525,6 +526,8 @@ public class PoliticalMap : GeoMap
             }
         }
         Console.WriteLine("Designated");
+        foreach(PoliticalParcel p in parcels) Console.Write(p.size + ", ");
+        Console.WriteLine();
     }
     public void PlaceCountries(int seed)
     {
@@ -555,15 +558,28 @@ public class PoliticalMap : GeoMap
                 index = random.Next(0, avaibleToPlaceCountry.Count);
                 x = avaibleToPlaceCountry[index].Item1; y = avaibleToPlaceCountry[index].Item2;
             }*/
-            int attempts = 0;
-            while (parcel.isEmpty)
+            /*while (parcel.isEmpty || (parcel.size < country.decised && parcel.size < country.min))
             {
-                attempts++;
                 Console.WriteLine("Decising");
                 if (parcels.Count == 0) break;
                 if (parcel.isEmpty) parcels.Remove(parcel);
                 parcel = parcels[random.Next(0, parcels.Count)];
-            }
+            }*/
+            if (parcel.isEmpty || (parcel.size < country.decised && parcel.size < country.min))
+                for (int i = 0; i < parcels.Count; i++)
+                {
+                    if (!parcels[i].isEmpty && parcels[i].size >= country.min)
+                    {
+                        Console.WriteLine("Decising");
+                        parcel = parcels[random.Next(0, parcels.Count)];
+                        break;
+                    }
+                    if (parcels[i].isEmpty)
+                    {
+                        parcels.RemoveAt(i);
+                        i--;
+                    }
+                }
             Console.WriteLine("Decised");
             if (parcels.Count == 0) break;
             (int, int) index = parcel.getIndexes[random.Next(0, parcel.getIndexes.Length)];
