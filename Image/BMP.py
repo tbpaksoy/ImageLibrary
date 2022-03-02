@@ -10,7 +10,10 @@ def createBMPHeader(width: int, height: int):
     data = []
     data.append("42")
     data.append("4D")
-    paddingCount = width * 3 % 4
+    paddingCount = width * 3
+    while not paddingCount % 4 == 0:
+        paddingCount += 1
+    paddingCount %= 4
     for i in reverseGroup(toHex(54 + width * height * 3 + height * paddingCount, 8).upper(), 2):
         data.append(i)
     for i in range(4):
@@ -55,18 +58,19 @@ def generateColorPallette(width: int, height: int, size: int, source: list):
 
 
 def generateColorColorMatrix(width, height, source: list):
-    paddingCount = width * 3 % 4
     result = []
     for subSource in source:
         for color in subSource:
             result.append(toHex(color.b, 2).upper())
             result.append(toHex(color.g, 2).upper())
             result.append(toHex(color.r, 2).upper())
-        for k in range(paddingCount):
+        while not len(result) % 4 == 0:
             result.append("00")
 
     return result
 
-file = open(os.getcwd()+"\\try.bmp","wb")
-file.write(fromHexToByteArray(generateColorPallette(1,1,25,[Color.Color("FFFFFFFF")])))
+
+file = open(os.getcwd()+"\\try.bmp", "wb")
+file.write(fromHexToByteArray(generateColorPallette(
+    1, 1, 40, [Color.Color("FFFFFFFF")])))
 file.close()

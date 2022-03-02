@@ -1,12 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import os
+import json
 
 
 @dataclass
 class Color:
-    r: float
-    g: float
-    b: float
-    a: float
+    r: int
+    g: int
+    b: int
+    a: int
 
     def __str__(self) -> str:
         return "Col: (" + str(self.r) + "," + str(self.g) + "," + str(self.b) + "," + str(self.a) + ")"
@@ -18,8 +20,8 @@ class Color:
         self.a = a
 
     def __init__(self, hex: str):
-        self.r = self.g = self.b = 0.0
-        self.a = 1.0
+        self.r = self.g = self.b = 0
+        self.a = 255
         for c in hex:
             if not c in "0123456789ABCDEFabcdef":
                 return
@@ -38,9 +40,9 @@ class Color:
 
     def createColorPalette(colors: list, width: int, height: int) -> list:
         palette = []
-        for i in range(0,width):
+        for i in range(0, width):
             temp = []
-            for j in range(0,height):
+            for j in range(0, height):
                 if i*j+j < len(colors):
                     temp.append(colors[i*j+j])
                 else:
@@ -56,9 +58,24 @@ class Color:
                 temp.append(palette[int(i/size)][int(j/size)])
             result.append(temp)
         return result
-def toSingleList(source:list):
+
+
+def toSingleList(source: list):
     result = []
     for i in source:
         for j in i:
             result.append(j)
     return result
+
+
+def getColorFromLibrary(name: str):
+    for file in os.listdir("C:\\Users\\Tahsin\\Desktop\\Image\\Colors\\"):
+        if file[len(file)-5:] == ".json":
+            temp = open("C:\\Users\\Tahsin\\Desktop\\Image\\Colors\\" + file)
+            data = json.load(temp)
+            if name in data:
+                return Color(data[name])
+    return Color("FFFFFFFF")
+
+
+print(getColorFromLibrary("red"))
