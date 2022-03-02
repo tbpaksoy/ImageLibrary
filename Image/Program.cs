@@ -73,7 +73,7 @@ namespace Program
             map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "ad64asd46");
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);*/
-            Console.WriteLine(Color.GetColorFromLibrary("blue"));
+            Console.WriteLine(Color.GetColorFromLibrary("green"));
             /*
             byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreateColorVariants(new Color("9B1E48"), 10, 10, 30));
             FileStream fs = new FileStream(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\firatV.bmp", FileMode.CreateNew);
@@ -87,6 +87,12 @@ namespace Program
             }
             Console.WriteLine(TahsinsLibrary.Image.BMP.CreateBMPHeader(50, 50).Length);
             */
+            byte[] a = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\try.bmp");
+            byte[] b = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\Adsız.bmp");
+            Console.WriteLine("a");
+            Analyze.AnalyzeByteArray(a, 0, true);
+            Console.WriteLine("b");
+            Analyze.AnalyzeByteArray(b, 0, true);
         }
     }
 }

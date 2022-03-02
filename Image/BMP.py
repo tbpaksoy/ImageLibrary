@@ -1,23 +1,27 @@
 from ArrayF import reverseGroup
-from ValueConversationF import toHex
-from Color import Color
+from ValueConversationF import fromHexToBinaryList, fromHexToByteArray, fromHexToDecimalList, fromStrToDecimalList, toHex
+import Color
+from Color import toSingleList
+import os
+import ValueConversationF
 
-def createBMPHeader(width=0, height=0):
+
+def createBMPHeader(width: int, height: int):
     data = []
     data.append("42")
     data.append("4D")
     paddingCount = width * 3 % 4
-    for i in reverseGroup(toHex(54 + width * height * 3 + height * paddingCount, 8), 2):
+    for i in reverseGroup(toHex(54 + width * height * 3 + height * paddingCount, 8).upper(), 2):
         data.append(i)
     for i in range(4):
         data.append("00")
-    for i in reverseGroup(toHex(54, 8), 2):
+    for i in reverseGroup(toHex(54, 8).upper(), 2):
         data.append(i)
-    for i in reverseGroup(toHex(40, 8), 2):
+    for i in reverseGroup(toHex(40, 8).upper(), 2):
         data.append(i)
-    for i in reverseGroup(toHex(width, 8), 2):
+    for i in reverseGroup(toHex(width, 8).upper(), 2):
         data.append(i)
-    for i in reverseGroup(toHex(height, 8), 2):
+    for i in reverseGroup(toHex(height, 8).upper(), 2):
         data.append(i)
     data.append("01")
     data.append("00")
@@ -25,10 +29,10 @@ def createBMPHeader(width=0, height=0):
     data.append("00")
     for i in range(4):
         data.append("00")
-    for i in reverseGroup(toHex(16, 8), 2):
+    for i in reverseGroup(toHex(16, 8).upper(), 2):
         data.append(i)
     for j in range(2):
-        for i in reverseGroup(toHex(2835, 8), 2):
+        for i in reverseGroup(toHex(2835, 8).upper(), 2):
             data.append(i)
     for i in range(8):
         data.append("00")
@@ -36,20 +40,33 @@ def createBMPHeader(width=0, height=0):
     return data
 
 
-def generateColorColorMatrix(width, height, source):
+def generateColorPallette(width: int, height: int, size: int, source: list):
+    if width * height < len(source):
+        pass
+    else:
+        colors = Color.Color.scalePalette(
+            Color.Color.createColorPalette(source, width, height), size)
+        data = []
+        for i in createBMPHeader(width*size, height*size):
+            data.append(i)
+        for i in generateColorColorMatrix(width, height, colors):
+            data.append(i)
+    return data
+
+
+def generateColorColorMatrix(width, height, source: list):
     paddingCount = width * 3 % 4
     result = []
-    for i in range(width):
-        for j in range(height):
-            color = Color(source[i*j+j])
-            result.append(toHex(color.r * 255))
-            result.append(toHex(color.g * 255))
-            result.append(toHex(color.b * 255))
+    for subSource in source:
+        for color in subSource:
+            result.append(toHex(color.b, 2).upper())
+            result.append(toHex(color.g, 2).upper())
+            result.append(toHex(color.r, 2).upper())
         for k in range(paddingCount):
             result.append("00")
 
     return result
 
-list = [Color("FFFFFF"),Color("FFFFFF"),Color("FFFFFF"),Color("FFFFFF")]
-for i in generateColorColorMatrix(2,2,list):
-    print(i)
+file = open(os.getcwd()+"\\try.bmp","wb")
+file.write(fromHexToByteArray(generateColorPallette(1,1,25,[Color.Color("FFFFFFFF")])))
+file.close()
