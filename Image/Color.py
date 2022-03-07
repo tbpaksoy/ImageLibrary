@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import os
 import json
+import MathF
 
 
 @dataclass
@@ -19,18 +20,19 @@ class Color:
         self.b = b
         self.a = a
 
-    def __init__(self, hex: str):
-        self.r = self.g = self.b = 0
-        self.a = 255
+    def fromHex(hex: str):
+        r = g = b = 0
+        a = 255
         for c in hex:
             if not c in "0123456789ABCDEFabcdef":
                 return
         if len(hex) == 6 or len(hex) == 8:
-            self.r = int(hex[0: 2], 16)
-            self.g = int(hex[2: 4], 16)
-            self.b = int(hex[4: 6], 16)
+            r = int(hex[0: 2], 16)
+            g = int(hex[2: 4], 16)
+            b = int(hex[4: 6], 16)
             if len(hex) == 8:
-                self.a = int(hex[6: 8], 16)
+                a = int(hex[6: 8], 16)
+        return Color(r, g, b, a)
 
     def printValues(self):
         print(str(self.r)+","+str(self.g)+","+str(self.b)+","+str(self.a))
@@ -43,10 +45,29 @@ class Color:
         for i in range(0, width):
             temp = []
             for j in range(0, height):
-                if i*j+j < len(colors):
-                    temp.append(colors[i*j+j])
+                if j*height+i < len(colors):
+                    temp.append(colors[height*j+i])
                 else:
-                    temp.append(Color("00000000"))
+                    temp.append(Color(0,0,0,1))
+            palette.append(temp)
+        return palette
+
+    def createColorTransition(a: list, b: list, step: int):
+        step = max(0, step)
+        while len(a) < max(len(a), len(b)):
+            a.append(Color())
+        while len(b) < max(len(a), len(b)):
+            b.append(Color())
+        palette = []
+        for i in range(len(a)):
+            temp = []
+            temp.append(a[i])
+            for j in range(1, step-1):
+                r = int(a[i].r + MathF.goToValue(a[i].r, b[i].r) * j / i)
+                g = int(a[i].g + MathF.goToValue(a[i].g, b[i].g) * j / i)
+                b = int(a[i].b + MathF.goToValue(a[i].b, b[i].b) * j / i)
+                temp.append(Color(r, g, b, 1))
+            temp.append(b[i])
             palette.append(temp)
         return palette
 
@@ -55,7 +76,8 @@ class Color:
         for i in range(len(palette[0])*size):
             temp = []
             for j in range(len(palette)*size):
-                temp.append(palette[int(i/size)][int(j/size)])
+                    temp.append(palette[j//size][i//size])
+                #print(str(i // size) + " " + str(j // size))
             result.append(temp)
         return result
 
@@ -74,8 +96,14 @@ def getColorFromLibrary(name: str):
             temp = open("C:\\Users\\Tahsin\\Desktop\\Image\\Colors\\" + file)
             data = json.load(temp)
             if name in data:
-                return Color(data[name])
-    return Color("FFFFFFFF")
-
-
-print(getColorFromLibrary("red"))
+                return Color(data[name]["r"], data[name]["g"], data[name]["b"], data[name]["a"])
+    return Color.fromHex("FFFFFFFF")
+def getColorsFromCollection(name: str):
+    result = []
+    for file in os.listdir("C:\\Users\\Tahsin\\Desktop\\Image\\Colors"):
+        if file[len(file)-5:] == ".json" and file == name + ".json":
+            temp = open("C:\\Users\\Tahsin\\Desktop\\Image\\Colors\\" + file)
+            data = json.load(temp)
+            for color in data:
+                result.append(Color(data[color]["r"], data[color]["g"], data[color]["b"], data[color]["a"]))
+    return result

@@ -1,9 +1,11 @@
+import random
+from xmlrpc.client import MAXINT
 from ArrayF import reverseGroup
 from ValueConversationF import fromHexToBinaryList, fromHexToByteArray, fromHexToDecimalList, fromStrToDecimalList, toHex
 import Color
 from Color import toSingleList
 import os
-import ValueConversationF
+import time
 
 
 def createBMPHeader(width: int, height: int):
@@ -69,8 +71,6 @@ def generateColorColorMatrix(width, height, source: list):
 
     return result
 
-
-file = open(os.getcwd()+"\\try.bmp", "wb")
-file.write(fromHexToByteArray(generateColorPallette(
-    1, 1, 40, [Color.Color("FFFFFFFF")])))
-file.close()
+for col in os.listdir(os.getcwd+"\\Colors"):
+    palette = Color.getColorsFromCollection(col)
+        
