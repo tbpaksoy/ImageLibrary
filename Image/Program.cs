@@ -87,12 +87,14 @@ namespace Program
             }
             Console.WriteLine(TahsinsLibrary.Image.BMP.CreateBMPHeader(50, 50).Length);
             */
+            /*
             byte[] a = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\try.bmp");
             byte[] b = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\Adsız.bmp");
             Console.WriteLine("a");
             Analyze.AnalyzeByteArray(a, 0, true);
             Console.WriteLine("b");
             Analyze.AnalyzeByteArray(b, 0, true);
+            */
         }
     }
 }

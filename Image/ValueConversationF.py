@@ -31,22 +31,22 @@ def toDecimal(source):
 
 
 def toHex(source, length):
-    if isDecimal(source):
-        temp = 0
-        if type(source) is str:
-            temp = int(source)
-        temp = source
-        result = hex(temp)
-        result = result[2:len(result)]
-        while len(result) < length:
-            result = "0" + result
-        return result
+    temp = 0
+    if type(source) is str:
+        temp = int(source)
+    temp = abs(source)
+    result = hex(temp)
+    result = result[2:len(result)]
+    while len(result) < length:
+        result = "0" + result
+    #print(source, result, sep=":")
+    return result
 
 
 def fromHexToBinaryList(source: list):
     result = []
     for i in source:
-        temp = bin(int(i,16))[2:]
+        temp = bin(int(i, 16))[2:]
         result.append(temp)
     return result
 
@@ -57,14 +57,16 @@ def fromHexToDecimalList(source: list):
         result.append(int(i, 16))
     return result
 
+
 def fromStrToDecimalList(source: list):
     result = []
     for i in source:
         result.append(int(i))
     return result
-def fromHexToByteArray(source:list):
+
+
+def fromHexToByteArray(source: list):
     result = []
     for i in source:
-        result.append(int(i,16))
+        result.append(abs(int(i, 16)))
     return bytearray(result)
-    

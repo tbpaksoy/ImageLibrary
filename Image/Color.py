@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import os
 import json
 import MathF
+import random
 
 
 @dataclass
@@ -15,10 +16,10 @@ class Color:
         return "Col: (" + str(self.r) + "," + str(self.g) + "," + str(self.b) + "," + str(self.a) + ")"
 
     def __init__(self, r: int, g: int, b: int, a: int):
-        self.r = r
-        self.g = g
-        self.b = b
-        self.a = a
+        self.r = min(max(r,0),255)
+        self.g = min(max(g,0),255)
+        self.b = min(max(b,0),255)
+        self.a = min(max(a,0),255)
 
     def fromHex(hex: str):
         r = g = b = 0
@@ -48,7 +49,7 @@ class Color:
                 if j*height+i < len(colors):
                     temp.append(colors[height*j+i])
                 else:
-                    temp.append(Color(0,0,0,1))
+                    temp.append(Color(0, 0, 0, 1))
             palette.append(temp)
         return palette
 
@@ -76,7 +77,7 @@ class Color:
         for i in range(len(palette[0])*size):
             temp = []
             for j in range(len(palette)*size):
-                    temp.append(palette[j//size][i//size])
+                temp.append(palette[j//size][i//size])
                 #print(str(i // size) + " " + str(j // size))
             result.append(temp)
         return result
@@ -98,6 +99,8 @@ def getColorFromLibrary(name: str):
             if name in data:
                 return Color(data[name]["r"], data[name]["g"], data[name]["b"], data[name]["a"])
     return Color.fromHex("FFFFFFFF")
+
+
 def getColorsFromCollection(name: str):
     result = []
     for file in os.listdir("C:\\Users\\Tahsin\\Desktop\\Image\\Colors"):
@@ -105,5 +108,31 @@ def getColorsFromCollection(name: str):
             temp = open("C:\\Users\\Tahsin\\Desktop\\Image\\Colors\\" + file)
             data = json.load(temp)
             for color in data:
-                result.append(Color(data[color]["r"], data[color]["g"], data[color]["b"], data[color]["a"]))
+                result.append(
+                    Color(data[color]["r"], data[color]["g"], data[color]["b"], data[color]["a"]))
     return result
+
+
+def getRandomColor():
+    return Color(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255)
+
+
+def generateColorTransition(x: list, y: list, step: int, default=Color(0, 0, 0, 255)):
+    step = max(1, step)
+    while len(x) < max(len(x), len(y)):
+        x.append(default)
+    while len(y) < max(len(x), len(y)):
+        y.append(default)
+    palette = []
+    for i in range(len(x)):
+        temp = []
+        temp.append(x[i])
+        for j in range(1,step + 1):
+            r = int(x[i].r + MathF.goToValue(x[i].r, y[i].r) * j / step)
+            g = int(x[i].g + MathF.goToValue(x[i].g, y[i].g) * j / step)
+            b = int(x[i].b + MathF.goToValue(x[i].b, y[i].b) * j / step)
+            a = int(x[i].a + MathF.goToValue(x[i].a, y[i].a) * j / step)
+            temp.append(Color(r, g, b, a))
+        temp.append(y[i])
+        palette.append(temp)
+    return palette

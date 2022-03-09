@@ -1,9 +1,8 @@
-import random
+
 from xmlrpc.client import MAXINT
-from ArrayF import reverseGroup
-from ValueConversationF import fromHexToBinaryList, fromHexToByteArray, fromHexToDecimalList, fromStrToDecimalList, toHex
+from ArrayF import reverseGroup,reverseArray
+from ValueConversationF import toHex, fromHexToByteArray
 import Color
-from Color import toSingleList
 import os
 import time
 
@@ -15,7 +14,6 @@ def createBMPHeader(width: int, height: int):
     paddingCount = width * 3
     while not paddingCount % 4 == 0:
         paddingCount += 1
-    paddingCount %= 4
     for i in reverseGroup(toHex(54 + width * height * 3 + height * paddingCount, 8).upper(), 2):
         data.append(i)
     for i in range(4):
@@ -59,6 +57,17 @@ def generateColorPallette(width: int, height: int, size: int, source: list):
     return data
 
 
+def generateColorTransition(a: list, b: list, step: int, size: int, default=Color.Color(255, 255, 255, 255)) -> list:
+    colors = Color.Color.scalePalette(
+        Color.generateColorTransition(a, b, step, default), size)
+    data = []
+    for i in createBMPHeader(len(a)*size, (step+2) * size):
+        data.append(i)
+    for i in generateColorColorMatrix(len(colors), step+2, colors):
+        data.append(i)
+    return data
+
+
 def generateColorColorMatrix(width, height, source: list):
     result = []
     for subSource in source:
@@ -66,11 +75,21 @@ def generateColorColorMatrix(width, height, source: list):
             result.append(toHex(color.b, 2).upper())
             result.append(toHex(color.g, 2).upper())
             result.append(toHex(color.r, 2).upper())
-        while not len(result) % 4 == 0:
+        while len(result) % 4 != 0:
             result.append("00")
 
     return result
 
-for col in os.listdir(os.getcwd+"\\Colors"):
-    palette = Color.getColorsFromCollection(col)
-        
+
+a = Color.getColorsFromCollection("Authentic")
+b = reverseArray(a)
+
+palette = generateColorTransition(a, b, 10, 25)
+"""
+for i in range(len(palette)):
+    if len(palette[i]) > 2:
+        print(palette[i],i,sep = ":")
+"""
+file = open("try.bmp", "wb")
+file.write(fromHexToByteArray(palette))
+file.close()
