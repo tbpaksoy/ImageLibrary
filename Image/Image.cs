@@ -394,6 +394,35 @@ namespace TahsinsLibrary
 
         public static class BMP
         {
+            private static string[] GenerateColorMatrix(int width, Color[] resource)
+        {
+            List<string> temp = new List<string>();
+            int height = resource.Length / width;
+            int paddingCount = width * 3 % 4;
+            CustomCalculation.Length = 2;
+            for (int i = 0, q = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++, q++)
+                {
+                    int index = q;
+                    temp.Add(CustomCalculation.GetHex(resource[index].b));
+                    //Console.Write(" "+temp[temp.Count-1]);
+                    temp.Add(CustomCalculation.GetHex(resource[index].g));
+                    //Console.Write(temp[temp.Count-1]);
+                    temp.Add(CustomCalculation.GetHex(resource[index].r));
+                    //Console.Write(temp[temp.Count-1]+" ");
+                }
+                for (int k = 0; k < paddingCount; k++)
+                {
+                    temp.Add(CustomCalculation.GetHex(0));
+                    //Console.Write(temp[temp.Count-1]);
+                }
+                //Console.WriteLine();
+            }
+            //Console.WriteLine(temp.Count);
+
+            return temp.ToArray();
+        }
             public static string[] CreateData(int width, int height, Func<byte, Color> Formula)
             {
                 List<string> data = new List<string>();
@@ -521,7 +550,7 @@ namespace TahsinsLibrary
                     List<string> data = new List<string>();
                     string[] header = CreateBMPHeader(width, height);
                     foreach (string s in header) data.Add(s);
-                    string[] colorData = Image.GenerateColorMatrix(width, colors);
+                    string[] colorData = GenerateColorMatrix(width, colors);
                     foreach (string s in colorData) data.Add(s);
                     return data.ToArray();
                 }
@@ -541,9 +570,77 @@ namespace TahsinsLibrary
                 }
                 return data.ToArray();
             }
+            public static string[] CreatePalette(Color[,] colors, int scaleX = 10, int scaleY = 10)
+            {
+                Color[] buffer = ToSingleDimension(ScaleColorArray(colors, scaleX, scaleY));
+                List<string> data = new List<string>();
+                string[] header = CreateBMPHeader(colors.GetLength(0) * scaleX, colors.GetLength(1) * scaleY);
+                foreach (string s in header)
+                {
+                    data.Add(s);
+                }
+                string[] palette = GenerateColorMatrix(colors.GetLength(0) * scaleX, buffer);
+                foreach (string s in palette)
+                {
+                    data.Add(s);
+                }
+                return data.ToArray();
+            }
         }
         public static class PNG
         {
+            public static List<string> AnalyzeIDATHex(string filePath)
+            {
+                if (filePath == null || !filePath.EndsWith(".png") || !File.Exists(filePath)) return null;
+                List<string> idat = new List<string>();
+                byte[] data = File.ReadAllBytes(filePath);
+                for (int i = 4; i < data.Length - 4; i++)
+                {
+                    if (data[i] == (byte)'I' && data[i + 1] == (byte)'D' && data[i + 2] == (byte)'A' && data[i + 3] == (byte)'T')
+                    {
+                        string temp = null;
+                        for(int j = i - 4; j < i; j++)
+                        {
+                            temp += data[j].ToString("X2");
+                        }
+                        int chunkLength = int.Parse(temp, NumberStyles.HexNumber);
+                        Console.WriteLine(temp);
+                        Console.WriteLine(chunkLength);
+                        for (int j = i - 4; j < i + chunkLength + 4; j++)
+                        {
+                            idat.Add(data[j].ToString("X2"));
+                        }
+                        break;
+                    }
+                }
+                return idat;
+            }
+            public static List<byte> AnalyzeIDATByte(string filePath)
+            {
+                if (filePath == null || !filePath.EndsWith(".png") || !File.Exists(filePath)) return null;
+                List<byte> idat = new List<byte>();
+                byte[] data = File.ReadAllBytes(filePath);
+                for (int i = 4; i < data.Length - 4; i++)
+                {
+                    if (data[i] == (byte)'I' && data[i + 1] == (byte)'D' && data[i + 2] == (byte)'A' && data[i + 3] == (byte)'T')
+                    {
+                        string temp = null;
+                        for(int j = i - 4; j < i; j++)
+                        {
+                            temp += data[j].ToString("X2");
+                        }
+                        int chunkLength = int.Parse(temp, NumberStyles.HexNumber);
+                        Console.WriteLine(temp);
+                        Console.WriteLine(chunkLength);
+                        for (int j = i - 4; j < i + chunkLength + 4; j++)
+                        {
+                            idat.Add(data[j]);
+                        }
+                        break;
+                    }
+                }
+                return idat;
+            }
             public enum ColorType
             {
                 Grayscale = 0, TrueColor = 2, Indexed = 3, GrayscaleAndAlpha = 4, TrueColorAndAlpha = 6
@@ -663,35 +760,6 @@ namespace TahsinsLibrary
                 return false;
             }
 
-        }
-        public static string[] GenerateColorMatrix(int width, Color[] resource)
-        {
-            List<string> temp = new List<string>();
-            int height = resource.Length / width;
-            int paddingCount = width * 3 % 4;
-            CustomCalculation.Length = 2;
-            for (int i = 0, q = 0; i < height; i++)
-            {
-                for (int j = 0; j < width; j++, q++)
-                {
-                    int index = q;
-                    temp.Add(CustomCalculation.GetHex(resource[index].b));
-                    //Console.Write(" "+temp[temp.Count-1]);
-                    temp.Add(CustomCalculation.GetHex(resource[index].g));
-                    //Console.Write(temp[temp.Count-1]);
-                    temp.Add(CustomCalculation.GetHex(resource[index].r));
-                    //Console.Write(temp[temp.Count-1]+" ");
-                }
-                for (int k = 0; k < paddingCount; k++)
-                {
-                    temp.Add(CustomCalculation.GetHex(0));
-                    //Console.Write(temp[temp.Count-1]);
-                }
-                //Console.WriteLine();
-            }
-            //Console.WriteLine(temp.Count);
-
-            return temp.ToArray();
         }
         public static Color[] GenerateColorArray(int width, int height, Func<byte, Color> Formula)
         {
@@ -916,6 +984,50 @@ namespace TahsinsLibrary
                 for (int j = 0; j < temp.GetLength(1); j++)
                 {
                     result[temp.GetLength(0) * j + i] = temp[i, j];
+                }
+            }
+            return result;
+        }
+        public static Color[,] GenerateMidColorTable(Color[] a, Color[] b)
+        {
+            Color[,] palette = new Color[a.Length + 1, b.Length + 1];
+            for (int i = 1; i < a.Length + 1; i++)
+            {
+                palette[i, 0] = a[i - 1];
+            }
+            for (int i = 1; i < b.Length + 1; i++)
+            {
+                palette[0, i] = b[i - 1];
+            }
+            for (int i = 1; i < palette.GetLength(0); i++)
+            {
+                for (int j = 1; j < palette.GetLength(1); j++)
+                {
+                    palette[i, j] = palette[i, 0].GetMidColor(palette[0, j]);
+                }
+            }
+            return palette;
+        }
+        public static Color[,] ScaleColorArray(Color[,] resource, int scaleX = 10, int scaleY = 10)
+        {
+            Color[,] result = new Color[resource.GetLength(0) * scaleX, resource.GetLength(1) * scaleY];
+            for (int i = 0; i < result.GetLength(0); i++)
+            {
+                for (int j = 0; j < result.GetLength(1); j++)
+                {
+                    result[i, j] = resource[i / scaleX, j / scaleY];
+                }
+            }
+            return result;
+        }
+        public static Color[] ToSingleDimension(Color[,] resource)
+        {
+            Color[] result = new Color[resource.GetLength(0) * resource.GetLength(1)];
+            for (int i = 0; i < resource.GetLength(0); i++)
+            {
+                for (int j = 0; j < resource.GetLength(1); j++)
+                {
+                    result[j * resource.GetLength(0) + i] = resource[i, j];
                 }
             }
             return result;

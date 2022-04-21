@@ -4,6 +4,8 @@ using TahsinsLibrary.Array;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Collections;
 namespace TahsinsLibrary
 {
     public enum Way
@@ -597,6 +599,42 @@ namespace TahsinsLibrary.Analyze
                 if (!checkTable[i.Item1, i.Item2]) return false;
             }
             return true;
+        }
+        public static (int, byte, byte)[] FindDiffrenceBetweenFiles(string a, string b)
+        {
+            if (a == null || b == null || !File.Exists(a) || !File.Exists(b)) return null;
+            byte[] ba = File.ReadAllBytes(a);
+            byte[] bb = File.ReadAllBytes(b);
+            int bound = (int)MathF.Min(a.Length, b.Length);
+            List<(int, byte, byte)> temp = new List<(int, byte, byte)>();
+            for (int i = 0; i < bound; i++)
+            {
+                if (ba[i] != bb[i])
+                {
+                    temp.Add((i, ba[i], bb[i]));
+                }
+            }
+            if (ba.Length == bb.Length) Console.WriteLine("Equal");
+            return temp.ToArray();
+        }
+    }
+}
+namespace TahsinsLibrary
+{
+    public static class CustomConsole
+    {
+        public static void WriteByColorOrder(IEnumerable e, ConsoleColor[] colors, string between = null)
+        {
+            ConsoleColor originalColor = Console.ForegroundColor;
+            int index = 0;
+            foreach(object o in e)
+            {
+                Console.ForegroundColor = colors[index];
+                Console.Write(o);
+                if(between != null) Console.Write(between);
+                index = (index + 1) % colors.Length;
+            }
+            Console.ForegroundColor = originalColor;
         }
     }
 }

@@ -12,89 +12,14 @@ namespace Program
     {
         static void Main(string[] args)
         {
-            /*const int uv = 25;
-            bool[,] bools = new bool[uv, uv];
-            Random random = new Random();
-
-            for (int i = 0; i < uv; i++)
-            {
-                for (int j = 0; j < uv; j++)
-                {
-                    bools[i, j] = random.Next() % 2 == 0;
-                }
-            }
-            int x = random.Next(0, uv), y = random.Next(0, uv);
-            List<(int, int)> ix = Analyze.EdgeDetect<bool>(bools[x, y], x, y, bools);
-            List<(int, int)> jy = Analyze.CheckAdjenctivty<bool>(bools[x, y], x, y, bools);
-            for (int i = 0; i < uv; i++)
-            {
-                for (int j = 0; j < uv; j++)
-                {
-                    if (ix.Contains((i, j)) && jy.Contains((i, j)))
-                    {
-                        Console.BackgroundColor = ConsoleColor.Blue;
-                        Console.Write(bools[i, j].ToString()[0] + " ");
-                        Console.BackgroundColor = ConsoleColor.Black;
-                    }
-                    else if (jy.Contains((i, j)) && !ix.Contains((i, j)))
-                    {
-                        Console.BackgroundColor = ConsoleColor.Red;
-                        Console.Write(bools[i, j].ToString()[0] + " ");
-                        Console.BackgroundColor = ConsoleColor.Black;
-                    }
-                    else Console.Write(bools[i, j].ToString()[0] + " ");
-                }
-                Console.WriteLine();
-            }*/
-            /*Stopwatch stopwatch = Stopwatch.StartNew();
-            const int width = 1500, height = 1500;
-            Biome sea = new Biome("sea", TahsinsLibrary.Color.blue, true, false);
-            Biome land = new Biome("land", TahsinsLibrary.Color.green, false, true);
-            Biome snow = new Biome("snowy", TahsinsLibrary.Color.white, false, true);
-            Biome savannah = new Biome("savannah", new Color(139, 134, 8), false, true);
-            Biome tundra = new Biome("tundra", new Color(155, 151, 133), false, true);
-            PoliticalMap map = new PoliticalMap();
-            int size = width * height;
-            Frequency<Biome> landF = new Frequency<Biome>(land, size / 25, size / 10);
-            Frequency<Biome> snowyF = new Frequency<Biome>(snow, size / 25, size / 10);
-            Frequency<Biome> savannahF = new Frequency<Biome>(savannah, size / 100, size / 40);
-            Frequency<Biome> tundraF = new Frequency<Biome>(tundra, size / 30, size / 15);
-            map.defaultBiome = sea;
-            map.FeedBiome(new Frequency<Biome>[] { landF, landF, landF, landF, landF, snowyF, snowyF, savannahF, tundraF }, width, height, 5);
-            Country country = new Country("Red", TahsinsLibrary.Color.red);
-            Country chorum = new Country("çorum", Color.purple);
-            Country burdur = new Country("brdr", Color.silver);
-            int freeLand = map.howManyFreeLandLeft;
-            Frequency<Country> redF = new Frequency<Country>(country, freeLand / 8 / 2, freeLand / 4 / 2);
-            Frequency<Country> chorumF = new Frequency<Country>(chorum, freeLand / 6 / 2, freeLand / 4 / 2);
-            Frequency<Country> brdrF = new Frequency<Country>(burdur, freeLand / 10, freeLand / 8);
-            map.FeedCountries(redF, redF, chorumF, brdrF);
-            map.PlaceCountries(10);
-            map.Export("C:\\Users\\Tahsin\\Desktop\\Image", "ad64asd46");
-            stopwatch.Stop();
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);*/
-            Console.WriteLine(Color.GetColorFromLibrary("green"));
-            /*
-            byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreateColorVariants(new Color("9B1E48"), 10, 10, 30));
-            FileStream fs = new FileStream(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\firatV.bmp", FileMode.CreateNew);
-            fs.Write(data);
+            Color[,] colors = new Color[3,3];
+            colors[0,1] = Color.auburn;
+            colors[2,2] = Color.bronze;
+            string [] palette = Image.BMP.CreatePalette(colors);
+            FileStream fs = new FileStream(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)+"\\a.bmp",FileMode.CreateNew);
+            fs.Write(CustomCalculation.ToByteArray(palette));
             fs.Flush();
-            fs.Close();*/
-            /*
-            foreach (string s in TahsinsLibrary.Image.BMP.CreateBMPHeader(50, 50))
-            {
-                Console.WriteLine(s);
-            }
-            Console.WriteLine(TahsinsLibrary.Image.BMP.CreateBMPHeader(50, 50).Length);
-            */
-            /*
-            byte[] a = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\try.bmp");
-            byte[] b = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\Adsız.bmp");
-            Console.WriteLine("a");
-            Analyze.AnalyzeByteArray(a, 0, true);
-            Console.WriteLine("b");
-            Analyze.AnalyzeByteArray(b, 0, true);
-            */
+            fs.Close();
         }
     }
 }

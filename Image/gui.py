@@ -1,44 +1,28 @@
-from Color import getColorsFromCollection
-from kivy.app import App
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.textinput import TextInput
-from BMP import generateColorTransition
-from ValueConversationF import fromHexToByteArray
-from ArrayF import reverseArray
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.slider import Slider
-
-class TestApp(App):
-    def build(self):
-        lo = GridLayout()
-        for i in range(4):
-            sb = TestApp.getSubColorLayout()
-            lo.add_widget(sb)
-            sb.center= (i*lo.center_x*2+lo.center_x/2,i*lo.center_y*2+lo.center_y/2)
-        return lo
-    def exportColor(colorName:str,exportName:str = "unnamed"):
-        if not exportName:
-            exportName = "unnamed"
-        col = getColorsFromCollection(colorName)
-        rev = reverseArray(col)
-        palette = generateColorTransition(col,rev,7,25)
-        file = open(exportName + ".bmp", "wb")
-        file.write(fromHexToByteArray(palette))
-        file.close()
-    def getSubColorLayout():
-        lo = BoxLayout()
-        lo.orientation = 'vertical'
-        for i in range(4):
-            lo.add_widget(Slider())
-        return lo
+from typing import Callable
+import dearpygui.dearpygui as dpg
 
 
+dpg.create_context()
+dpg.create_viewport()
+dpg.setup_dearpygui()
+
+cw = 150
+ch = 150
+spacing = 75
+chcp = 0
 
 
+with dpg.window(no_collapse=True,no_close=True,no_move=True,tag="Only",no_title_bar=True):
+    for i in range(5):
+        for j in range(5):
+            color_picker = dpg.add_color_picker(pos=((cw+spacing)*i,(ch+spacing)*j),width=cw, height=ch,tag="color_picker_"+str(i)+"_"+str(j))
+            f = Callable(print(i))
+            button = dpg.add_button(pos=((cw+spacing)*i,(ch+spacing)*j + 200),label= "Remove", callback = f)
+        chcp = i
+    dpg.add_button(pos=(0,ch*(chcp-1)),label="Export Palette")
+    dpg.configure_item("Only", width = 5000, height = 5000)
 
 
-
-TestApp().run()
+dpg.show_viewport()
+dpg.start_dearpygui()
+dpg.destroy_context()

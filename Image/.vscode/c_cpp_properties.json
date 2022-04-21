@@ -3,9 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
-                "${default}",
-                "C:/godot/include",
-                "C:/godot/**"
+                "${default}"
             ],
             "defines": [
                 "_DEBUG",
