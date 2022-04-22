@@ -394,7 +394,7 @@ namespace TahsinsLibrary
 
         public static class BMP
         {
-            private static string[] GenerateColorMatrix(int width, Color[] resource)
+            public static string[] GenerateColorMatrix(int width, Color[] resource)
         {
             List<string> temp = new List<string>();
             int height = resource.Length / width;

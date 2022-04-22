@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include "ImgLibBase.cpp"
 #include <filesystem>
+#include <fstream>
 
 using namespace std;
-using namespace std::filesystem;
 using namespace Tahsin;
 const int BMPHeaderLength = 16;
 
@@ -18,6 +18,7 @@ vector<string> CreateBitmapInfoHeader(int width, int height)
     temp.push_back(GetHexValue('M'));
     length = 8;
     int paddingCount = width * 3 % 4;
+    cout << endl << paddingCount << endl;
     string s = GetHexValue(54 + width * height * 3 + height * paddingCount);
     string *sa = GroupAndReverse(s, 2);
     for (int i = 0; i < s.size() / 2; i++)
@@ -69,41 +70,51 @@ vector<string> CreateBitmapInfoHeader(int width, int height)
 vector<string> GenerateColorData(vector<vector<Color>> resource)
 {
     length = 2;
-    for(vector<Color> v : resource)
-    {
-        while (v.size()%4!=0)
-        {
-            v.push_back(Color());
-        }
-    }
     vector<string> data;
-    for(vector<Color> v : resource)
+    for (vector<Color> v : resource)
     {
-        for(Color c : v)
+        for (Color c : v)
         {
-            data.push_back(GetHexValue(c.b));
-            data.push_back(GetHexValue(c.g));
-            data.push_back(GetHexValue(c.r));
+            data.push_back(GetHexValue((unsigned char)c.b));
+            data.push_back(GetHexValue((unsigned char)c.g));
+            data.push_back(GetHexValue((unsigned char)c.r));
+        }
+        while (data.size() % 4 != 0)
+        {
+            data.push_back(GetHexValue((unsigned char)0));
         }
     }
     return data;
 }
-vector<string> GetBMPByteData(vector<vector<Color>>colors)
+vector<string> GetBMPData(vector<vector<Color>> colors)
 {
     vector<string> data;
-    for(string s : CreateBitmapInfoHeader(colors.size(),colors[0].size()))
+    for (string s : CreateBitmapInfoHeader(colors[0].size(), colors.size()))
     {
         data.push_back(s);
     }
-    for(string s : GenerateColorData(colors))
+    for (string s : GenerateColorData(colors))
     {
         data.push_back(s);
     }
     return data;
 }
-
 
 int main()
 {
-    cout << current_path()  << endl;
+    srand(time(NULL));
+    vector<vector<Color>> cols;
+    for (int i = 0; i < 5; i++)
+    {
+        vector<Color> sub;
+        for (int j = 0; j < 5; j++)
+        {
+            sub.push_back(Color(rand() % 256, rand() % 256, rand() % 256, rand() % 256));
+        }
+        cols.push_back(sub);
+    }
+    vector<string> data = GetBMPData(ScaleVector(cols, 7, 20));
+    ofstream fs("a.bmp", std::ofstream::binary);
+    fs.write(ToByteArray(data), data.size());
+    fs.close();
 }

@@ -226,12 +226,12 @@ namespace Tahsin
         }
         return result;
     }
-    const char *ToByteArray(string source[])
+    const char *ToByteArray(vector<string> source)
     {
-        char *result = new char[source->length()];
-        for (int i = 0; i < source->length(); i++)
+        char *result = new char[source.size()];
+        for (int i = 0; i < source.size(); i++)
         {
-            result[i] = (int)GetDecimalValue(source[i]);
+            result[i] = (char)GetDecimalValue(source[i]);
         }
 
         return result;
@@ -281,5 +281,20 @@ namespace Tahsin
             result += source[i].size();
         }
         return result /= source.size();
+    }
+    template <typename T>
+    vector<vector<T>> ScaleVector(vector<vector<T>> source, int x = 10, int y = 10)
+    {
+        vector<vector<T>> result;
+        for(int i=0 ;i < source.size()*y; i++)
+        {
+            vector<T> sub;
+            for(int j = 0 ; j < source[0].size()*x; j++)
+            {
+                sub.push_back(source[i/y][j/x]);
+            }
+            result.push_back(sub);
+        }
+        return result;
     }
 }

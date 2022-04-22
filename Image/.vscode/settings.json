@@ -4,7 +4,13 @@
         "vector": "cpp",
         "stdexcept": "cpp",
         "array": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "filesystem": "cpp",
+        "chrono": "cpp",
+        "iosfwd": "cpp",
+        "xiosbase": "cpp",
+        "iostream": "cpp",
+        "xlocale": "cpp"
     },
     "python.autoComplete.extraPaths": 
     [
