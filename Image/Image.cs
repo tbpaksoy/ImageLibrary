@@ -191,38 +191,6 @@ namespace TahsinsLibrary
             if (hex.Length == 8) color.hex = hex;
             return color;
         }
-        public static readonly Color red = new Color(255, 0, 0);//X
-        public static readonly Color green = new Color(0, 255, 0);//X
-        public static readonly Color blue = new Color(0, 0, 255);//X
-        public static readonly Color purple = new Color(128, 0, 128);//X
-        public static readonly Color yellow = new Color(255, 255, 0);//X
-        public static readonly Color lime = new Color(191, 255, 0);//x
-        public static readonly Color pink = new Color(255, 192, 203);//X
-        public static readonly Color indigo = new Color(75, 0, 130);//x
-        public static readonly Color navy = new Color(0, 0, 128);//x
-        public static readonly Color white = new Color(255, 255, 255);//X
-        public static readonly Color black = new Color(0, 0, 0);//X
-        public static readonly Color aliceBlue = new Color(240, 248, 255);//x
-        public static readonly Color lavender = new Color(230, 230, 230);//x
-        public static readonly Color lightBlue = new Color(173, 216, 230);//x
-        public static readonly Color orange = new Color(255, 165, 0);//X
-        public static readonly Color gold = new Color(255, 215, 0);//X
-        public static readonly Color coral = new Color(255, 127, 80);//x
-        public static readonly Color cyan = new Color(0, 255, 255);//x
-        public static readonly Color silver = new Color(128, 128, 128);//X
-        public static readonly Color paleTurquise = new Color(175, 238, 238);//x
-        public static readonly Color turquise = new Color(64, 224, 208);//x
-        public static readonly Color mediumTurquoise = new Color(72, 209, 204);//x
-        public static readonly Color darkTurquoise = new Color(0, 206, 209);//x
-        public static readonly Color grey = new Color(128, 128, 128);//X
-        public static readonly Color ivory = new Color(255, 255, 240);//x
-        public static readonly Color burgundy = new Color(128, 0, 32);//x
-        public static readonly Color auburn = new Color(146, 39, 36);//x
-        public static readonly Color kuCrimson = new Color(225, 8, 22);//x
-        public static readonly Color wood = new Color(186, 140, 99);//x
-        public static readonly Color bronze = new Color(205, 127, 50);//x
-        public static readonly Color copper = new Color(184, 115, 51);//x
-        public static readonly Color sand = new Color(194, 178, 128);//x
     }
     public struct ColorRange
     {
@@ -880,18 +848,18 @@ namespace TahsinsLibrary
             Color[,] palette = new Color[width + 1, height + 1];
             for (int i = 0; i < width + 1; i++)
             {
-                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, Color.black.r) * i / width);
-                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, Color.black.g) * i / width);
-                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, Color.black.b) * i / width);
-                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, Color.black.a) * i / width);
+                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(0,0,0,255).r) * i / width);
+                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(0,0,0,255).g) * i / width);
+                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(0,0,0,255).b) * i / width);
+                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(0,0,0,255).a) * i / width);
                 palette[i, 0] = new Color(r, g, b, a);
             }
             for (int i = 0; i < height + 1; i++)
             {
-                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, Color.white.r) * i / width);
-                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, Color.white.g) * i / width);
-                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, Color.white.b) * i / width);
-                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, Color.white.a) * i / width);
+                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(255,255,255,255).r) * i / width);
+                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(255,255,255,255).g) * i / width);
+                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(255,255,255,255).b) * i / width);
+                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(255,255,255,255).a) * i / width);
                 palette[0, i] = new Color(r, g, b, a);
             }
             for (int i = 1; i < width + 1; i++)

@@ -35,7 +35,7 @@ public class GeoMap : IExportable, IColorTurnable
 {
 
     private Random random;
-    public readonly Biome blank = new Biome("blank", Color.black);
+    public readonly Biome blank = new Biome("blank", new Color());
     public Biome defaultBiome;
     public string name { get; set; }
     protected Biome[,] biomes;
