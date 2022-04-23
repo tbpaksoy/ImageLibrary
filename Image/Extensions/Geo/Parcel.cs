@@ -40,7 +40,7 @@ public abstract class Parcel<T>
     {
         Random random = new Random();
         (int, int) i = indexes[random.Next(0, indexes.Count)];
-        if (indexes.Count == Analyze.CountAdjencts(indexes, i.Item1, i.Item2))
+        if (indexes.Count == AnalyzeF.CountAdjencts(indexes, i.Item1, i.Item2))
         {
             return true;
         }
@@ -53,7 +53,7 @@ public class PhysicalParcel : Parcel<Biome>
     public PhysicalParcel(Biome[,] source, int x, int y)
     {
         this.source = source;
-        indexes = Analyze.CheckAdjenctivty<Biome>(null, x, y, this.source);
+        indexes = AnalyzeF.CheckAdjenctivty<Biome>(null, x, y, this.source);
     }
     public override void AddToParcel(List<(int, int)> indexes)
     {
@@ -81,9 +81,9 @@ public class PhysicalParcel : Parcel<Biome>
         List<Parcel<Biome>> result = new List<Parcel<Biome>>();
         Random random = new Random();
         (int, int) i = indexes[random.Next(0, indexes.Count)];
-        while (indexes.Count != Analyze.CountAdjencts(indexes, i.Item1, i.Item2))
+        while (indexes.Count != AnalyzeF.CountAdjencts(indexes, i.Item1, i.Item2))
         {
-            List<(int, int)> temp = Analyze.GetSubAdjenctList(indexes, i.Item1, i.Item2);
+            List<(int, int)> temp = AnalyzeF.GetSubAdjenctList(indexes, i.Item1, i.Item2);
             RemoveFromParcel(temp);
             PhysicalParcel parcel = new PhysicalParcel();
             parcel.indexes = temp;
@@ -107,7 +107,7 @@ public class PoliticalParcel : Parcel<Country>
     public PoliticalParcel(bool[,] avaibility, int x, int y)
     {
         this.avaibility = avaibility;
-        indexes = Analyze.CheckAdjenctivty<bool>(true, x, y, this.avaibility);
+        indexes = AnalyzeF.CheckAdjenctivty<bool>(true, x, y, this.avaibility);
     }
     public override void AddToParcel(List<(int, int)> indexes)
     {
@@ -135,9 +135,9 @@ public class PoliticalParcel : Parcel<Country>
         List<Parcel<Country>> result = new List<Parcel<Country>>();
         Random random = new Random();
         (int, int) i = indexes[random.Next(0, indexes.Count)];
-        while (indexes.Count != Analyze.CountAdjencts(indexes, i.Item1, i.Item2))
+        while (indexes.Count != AnalyzeF.CountAdjencts(indexes, i.Item1, i.Item2))
         {
-            List<(int, int)> temp = Analyze.GetSubAdjenctList(indexes, i.Item1, i.Item2);
+            List<(int, int)> temp = AnalyzeF.GetSubAdjenctList(indexes, i.Item1, i.Item2);
             RemoveFromParcel(temp);
             PoliticalParcel parcel = new PoliticalParcel();
             parcel.indexes = temp;

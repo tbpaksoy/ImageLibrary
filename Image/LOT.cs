@@ -238,10 +238,8 @@ namespace TahsinsLibrary.Calculation
 }
 namespace TahsinsLibrary.Analyze
 {
-    public static class Analyze
+    public static class AnalyzeF
     {
-        public static bool isTempStarted = false;
-        private static List<(int, int)> temp = new List<(int, int)>();
         public static (List<string>, List<int>) AnalyzeByteList(List<byte> resource, bool writeToConsole = false, int writeBy = 0)
         {
             List<string> including = new List<string>();
@@ -301,40 +299,6 @@ namespace TahsinsLibrary.Analyze
                 }
             }
             return (including, amount);
-        }
-
-        public static void GetAdjenctIndexesForClassType<T>(T item, int x, int y, T[,] source) where T : class
-        {
-            if (!isTempStarted)
-            {
-                temp.Clear();
-                isTempStarted = true;
-            }
-            if (source[x, y] == item && !temp.Contains((x, y)))
-            {
-                temp.Add((x, y));
-            }
-            else return;
-            if (x - 1 > -1) GetAdjenctIndexesForClassType<T>(item, x - 1, y, source);
-            if (x + 1 < source.GetLength(0)) GetAdjenctIndexesForClassType<T>(item, x + 1, y, source);
-            if (y - 1 > -1) GetAdjenctIndexesForClassType<T>(item, x, y - 1, source);
-            if (y + 1 < source.GetLength(1)) GetAdjenctIndexesForClassType<T>(item, x, y + 1, source);
-        }
-        public static void GetAdjenctIndexesForStructType<T>(T item, int x, int y, T[,] source) where T : struct
-        {
-            if (!isTempStarted)
-            {
-                isTempStarted = true;
-            }
-            if (source[x, y].Equals(item) && !temp.Contains((x, y)))
-            {
-                temp.Add((x, y));
-            }
-            else return;
-            if (x - 1 > -1) GetAdjenctIndexesForStructType<T>(item, x - 1, y, source);
-            if (x + 1 < source.GetLength(0)) GetAdjenctIndexesForStructType<T>(item, x + 1, y, source);
-            if (y - 1 > -1) GetAdjenctIndexesForStructType<T>(item, x, y - 1, source);
-            if (y + 1 < source.GetLength(1)) GetAdjenctIndexesForStructType<T>(item, x, y + 1, source);
         }
         public static List<(int, int)> CheckAdjenctivty<T>(T item, int x, int y, T[,] source)
         {
@@ -399,60 +363,9 @@ namespace TahsinsLibrary.Analyze
             }
             return list;
         }
-        public static List<(int, int)> CheckAdjenctivtyParallel<T>(T item, int x, int y, T[,] source)
+        public static List<(int, int)> CheckAdcentivty<T>(Func<T,bool> condition, int x, int y, T[,] source, int limit = int.MaxValue)
         {
-            bool[,] isChecked = new bool[source.GetLength(0), source.GetLength(1)];
-            List<(int, int)> list = new List<(int, int)>();
-            ConcurrentBag<(int, int)> concurrent = new ConcurrentBag<(int, int)>();
-            ConcurrentBag<(int, int)> borders = new ConcurrentBag<(int, int)>();
-            list.Add((x, y));
-            if (x > 0 && item.Equals(source[x - 1, y])) borders.Add((x - 1, y));
-            if (x < source.GetLength(1) - 1 && item.Equals(source[x + 1, y])) borders.Add((x + 1, y));
-            if (y > 0 && item.Equals(source[x, y - 1])) borders.Add((x, y - 1));
-            if (y < source.GetLength(1) - 1 && item.Equals(source[x, y + 1])) borders.Add((x, y + 1));
-            while (borders.Count > 0)
-            {
-                /*for (int j = 0; j < borders.Count; j++)
-                {
-                    (int, int) i = borders[j];
-                    if (isChecked[i.Item1, i.Item2])
-                    {
-                        borders.RemoveAt(j);
-                        j--;
-                        continue;
-                    }
-                    borders.Remove(i);
-                    isChecked[i.Item1, i.Item2] = true;
-                    if (source[i.Item1, i.Item2].Equals(item))
-                    {
-                        list.Add(i);
-                        if (i.Item1 > 0 && isChecked[i.Item1 - 1, i.Item2] == false) borders.Add((i.Item1 - 1, i.Item2));
-                        if (i.Item1 < source.GetLength(0) - 1 && isChecked[i.Item1 + 1, i.Item2] == false) borders.Add((i.Item1 + 1, i.Item2));
-                        if (i.Item2 > 0 && isChecked[i.Item1, i.Item2 - 1] == false) borders.Add((i.Item1, i.Item2 - 1));
-                        if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
-                    }
-                }*/
-                Parallel.ForEach(borders, j =>
-                 {
-                     if (!isChecked[j.Item1, j.Item2] && borders.TryPeek(out (int, int) i))
-                     {
-                         isChecked[i.Item1, i.Item2] = true;
-                         if (source[i.Item1, i.Item2].Equals(item))
-                         {
-                             concurrent.Add(i);
-                             if (i.Item1 > 0 && isChecked[i.Item1 - 1, i.Item2] == false) borders.Add((i.Item1 - 1, i.Item2));
-                             if (i.Item1 < source.GetLength(0) - 1 && isChecked[i.Item1 + 1, i.Item2] == false) borders.Add((i.Item1 + 1, i.Item2));
-                             if (i.Item2 > 0 && isChecked[i.Item1, i.Item2 - 1] == false) borders.Add((i.Item1, i.Item2 - 1));
-                             if (i.Item2 < source.GetLength(1) - 1 && isChecked[i.Item1, i.Item2 + 1] == false) borders.Add((i.Item1, i.Item2 + 1));
-                         }
-                     }
-                 });
-                Parallel.ForEach(concurrent, indexes =>
-                {
-                    list.Add(indexes);
-                });
-            }
-            return list;
+            throw new Exception();
         }
         public static List<(int, int)> EdgeDetect<T>(T item, int x, int y, T[,] source)
         {
@@ -517,22 +430,6 @@ namespace TahsinsLibrary.Analyze
                 table[i.Item1, i.Item2] = true;
             }
             return CheckAdjenctivty<bool>(true, x, y, table);
-        }
-        public static List<(int, int)> GetTemp()
-        {
-            return temp;
-        }
-        public static void ClearTemp()
-        {
-            isTempStarted = false;
-            temp.Clear();
-        }
-        public static List<(int, int)> GetTempsCopy(bool clearTemp)
-        {
-            List<(int, int)> list = new List<(int, int)>();
-            foreach ((int, int) i in temp) list.Add(i);
-            if (clearTemp) temp.Clear();
-            return list;
         }
     }
     public static class Compare

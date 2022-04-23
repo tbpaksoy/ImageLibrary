@@ -97,7 +97,7 @@ public class GeoMap : IExportable, IColorTurnable
     private void Smooth(int threshold)
     {
         bool[,] isChecked = new bool[biomes.GetLength(0), biomes.GetLength(1)];
-        List<(int, int)> list = Analyze.CheckAdjenctivty<bool>(true, 0, 0, emptiness);
+        List<(int, int)> list = AnalyzeF.CheckAdjenctivty<bool>(true, 0, 0, emptiness);
         foreach ((int, int) i in list) isChecked[i.Item1, i.Item2] = true;
         for (int i = 0; i < biomes.GetLength(0); i++)
         {
@@ -105,7 +105,7 @@ public class GeoMap : IExportable, IColorTurnable
             {
                 if (!emptiness[i, j] && !isChecked[i, j])
                 {
-                    list = Analyze.CheckAdjenctivty<bool>(true, i, j, emptiness);
+                    list = AnalyzeF.CheckAdjenctivty<bool>(true, i, j, emptiness);
                     if (list.Count < threshold)
                     {
                         foreach ((int, int) ii in list)
@@ -509,7 +509,7 @@ public class PoliticalMap : GeoMap
             {
                 if (!table[i, j])
                 {
-                    List<(int, int)> temp = Analyze.CheckAdjenctivty<bool>(countryLands[i, j], i, j, countryLands);
+                    List<(int, int)> temp = AnalyzeF.CheckAdjenctivty<bool>(countryLands[i, j], i, j, countryLands);
                     Console.Write(temp.Count);
                     passed += temp.Count;
                     foreach ((int, int) x in temp)
@@ -595,7 +595,7 @@ public class PoliticalMap : GeoMap
     private void DeclareLandAsCountry(Frequency<Country> country, int x, int y)
     {
         centers.Add((x, y));
-        List<(int, int)> avaible = Analyze.CheckAdjenctivty<bool>(true, x, y, countryLands);
+        List<(int, int)> avaible = AnalyzeF.CheckAdjenctivty<bool>(true, x, y, countryLands);
         int decised = country.decised > avaible.Count ? Math.Max(avaible.Count, country.min) : country.decised;
         ownership[x, y] = country.item;
         List<(int, int)> buffer = new List<(int, int)>();
@@ -715,7 +715,7 @@ public class PoliticalMap : GeoMap
         Color[] result = base.TurnColor();
         foreach ((int, int) i in centers)
         {
-            List<(int, int)> borders = Analyze.EdgeDetect<Country>(ownership[i.Item1, i.Item2], i.Item1, i.Item2, ownership);
+            List<(int, int)> borders = AnalyzeF.EdgeDetect<Country>(ownership[i.Item1, i.Item2], i.Item1, i.Item2, ownership);
             foreach ((int, int) j in borders)
             {
                 result[j.Item1 * ownership.GetLength(1) + j.Item2] = ownership[i.Item1, i.Item2].color;
