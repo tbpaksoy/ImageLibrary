@@ -14,14 +14,23 @@ namespace Program
     {
         static void Main(string[] args)
         {
-            GeoMap map = new GeoMap();
-            const int w = 100, h = 100;
-            Frequency<Biome> b1 = new Frequency<Biome>(new Biome("Grass",Color.GetColorFromLibrary("green")),w*h/200, w*h/10);
-            Frequency<Biome> b2 = new Frequency<Biome>(b1.item,w*h/100,w*h/50);
-            map.defaultBiome = new Biome("Sea",Color.GetColorFromLibrary("blue"));
-            map.FeedBiome(new Frequency<Biome>[]{b1,b1,b2},w,h,645);
-            map.Export(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),"deneme");
-            Console.WriteLine("Done");
+            string current = Directory.GetCurrentDirectory();
+            Color a = Color.random;
+            Color b = Color.random;
+            Color c = Color.random;
+            List<(byte[], string)> datas = new List<(byte[], string)>();
+            datas.Add((Image.BMP.GetMidColorData(new Color[] { a, b, c }, new Color[] { a, b, c }, 10, 10), "MidColor"));
+            datas.Add((Image.BMP.GetTransitionData(new Color[] { a, b, c }, new Color[] { c, a, b }, 5), "Transition"));
+            datas.Add((Image.BMP.GetVariantData(a, 10, 10), "Variants"));
+            datas.Add((Image.BMP.GetPaletteData(new Color[,] { { a, b, c } }), "Palette"));
+            foreach ((byte[], string) data in datas)
+            {
+                if (File.Exists(current + $"//{data.Item2}.bmp")) continue;
+                FileStream fs = new FileStream(current + $"//{data.Item2}.bmp", FileMode.CreateNew);
+                fs.Write(data.Item1);
+                fs.Flush();
+                fs.Close();
+            }
         }
     }
 }

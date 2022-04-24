@@ -187,6 +187,13 @@ namespace TahsinsLibrary.Geo
         }
         public List<(int, int)> GetPoints(bool[,] checkTable, int amount)
         {
+            (int, int) point = randomPoint;
+            while(!checkTable[point.Item1,point.Item2])
+            {
+                point = randomPoint;
+            }
+            List<(int,int)> points = new List<(int, int)>();
+            points.Add(point);
             throw new Exception();
         }
     }

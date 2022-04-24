@@ -22,6 +22,14 @@ namespace TahsinsLibrary
     public struct Color
     {
         public byte r, g, b, a;
+        public static Color random
+        {
+            get
+            {
+                Random r = new Random();
+                return new(r.Next() % 256, r.Next() % 256, r.Next() % 256);
+            }
+        }
         public string hex
         {
             get
@@ -171,7 +179,7 @@ namespace TahsinsLibrary
         public static Color GetColorFromLibrary(string name)
         {
             name = name.Trim().ToLower();
-            foreach (string file in Directory.EnumerateFiles(@"C:\Users\Tahsin\Desktop\Image\Colors"))
+            foreach (string file in Directory.EnumerateFiles(@$"{Directory.GetCurrentDirectory()}\Colors"))
             {
                 if (file.EndsWith("json"))
                 {
@@ -362,51 +370,35 @@ namespace TahsinsLibrary
 
         public static class BMP
         {
+            #region string[]
             public static string[] GenerateColorMatrix(int width, Color[] resource)
-        {
-            List<string> temp = new List<string>();
-            int height = resource.Length / width;
-            int paddingCount = width * 3 % 4;
-            CustomCalculation.Length = 2;
-            for (int i = 0, q = 0; i < height; i++)
             {
-                for (int j = 0; j < width; j++, q++)
+                List<string> temp = new List<string>();
+                int height = resource.Length / width;
+                int paddingCount = width * 3 % 4;
+                CustomCalculation.Length = 2;
+                for (int i = 0, q = 0; i < height; i++)
                 {
-                    int index = q;
-                    temp.Add(CustomCalculation.GetHex(resource[index].b));
-                    //Console.Write(" "+temp[temp.Count-1]);
-                    temp.Add(CustomCalculation.GetHex(resource[index].g));
-                    //Console.Write(temp[temp.Count-1]);
-                    temp.Add(CustomCalculation.GetHex(resource[index].r));
-                    //Console.Write(temp[temp.Count-1]+" ");
+                    for (int j = 0; j < width; j++, q++)
+                    {
+                        int index = q;
+                        temp.Add(CustomCalculation.GetHex(resource[index].b));
+                        //Console.Write(" "+temp[temp.Count-1]);
+                        temp.Add(CustomCalculation.GetHex(resource[index].g));
+                        //Console.Write(temp[temp.Count-1]);
+                        temp.Add(CustomCalculation.GetHex(resource[index].r));
+                        //Console.Write(temp[temp.Count-1]+" ");
+                    }
+                    for (int k = 0; k < paddingCount; k++)
+                    {
+                        temp.Add(CustomCalculation.GetHex(0));
+                        //Console.Write(temp[temp.Count-1]);
+                    }
+                    //Console.WriteLine();
                 }
-                for (int k = 0; k < paddingCount; k++)
-                {
-                    temp.Add(CustomCalculation.GetHex(0));
-                    //Console.Write(temp[temp.Count-1]);
-                }
-                //Console.WriteLine();
-            }
-            //Console.WriteLine(temp.Count);
+                //Console.WriteLine(temp.Count);
 
-            return temp.ToArray();
-        }
-            public static string[] CreateData(int width, int height, Func<byte, Color> Formula)
-            {
-                List<string> data = new List<string>();
-
-                string[] header = CreateBMPHeader(width, height);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] colors = GenerateColorMatrix(width, GenerateColorArray(width, height, Formula));
-                foreach (string s in colors)
-                {
-                    data.Add(s);
-                }
-
-                return data.ToArray();
+                return temp.ToArray();
             }
             public static string[] CreatePalette(Color[] colors, int paletteWidth, int paletteHeight, int paletteSize)
             {
@@ -465,51 +457,6 @@ namespace TahsinsLibrary
 
                 return data.ToArray();
             }
-            public static string[] CreateColorTransition(Color[] from, Color[] to, int colorSize, int step)
-            {
-                List<string> data = new List<string>();
-                string[] header = CreateBMPHeader(from.Length * colorSize, (step + 2) * colorSize);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] palette = GenerateColorMatrix(from.Length * colorSize, GenerateColorTransition(from, to, step, colorSize));
-                foreach (string s in palette)
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateColorVariants(Color resource, int width, int height, int colorSize)
-            {
-                List<string> data = new List<string>();
-                string[] header = CreateBMPHeader((width + 1) * colorSize, (height + 1) * colorSize);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] palette = GenerateColorMatrix((width + 1) * colorSize, GenerateColorVariants(resource, width, height, colorSize));
-                foreach (string s in palette)
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateMidColorTable(Color[] colors, int colorSize)
-            {
-                List<string> data = new List<string>();
-                string[] header = CreateBMPHeader((colors.Length + 1) * colorSize, (colors.Length + 1) * colorSize);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] palette = GenerateColorMatrix((colors.Length + 1) * colorSize, GenerateMidColorTable(colors, colorSize));
-                foreach (string s in palette)
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
             public static string[] CreateDirectColor(Color[] colors, int width, int height)
             {
                 if (colors.Length != width * height) return null;
@@ -523,21 +470,7 @@ namespace TahsinsLibrary
                     return data.ToArray();
                 }
             }
-            public static string[] CreateMidColorTable(Color[] a, Color[] b, int colorSize)
-            {
-                List<string> data = new List<string>();
-                string[] header = CreateBMPHeader((a.Length + 1) * colorSize, (b.Length + 1) * colorSize);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] palette = GenerateColorMatrix((a.Length + 1) * colorSize, GenerateMidColorTable(a, b, colorSize));
-                foreach (string s in palette)
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
+
             public static string[] CreatePalette(Color[,] colors, int scaleX = 10, int scaleY = 10)
             {
                 Color[] buffer = ToSingleDimension(ScaleColorArray(colors, scaleX, scaleY));
@@ -554,6 +487,55 @@ namespace TahsinsLibrary
                 }
                 return data.ToArray();
             }
+            public static string[] CreateColorVariants(Color color, int width = 9, int height = 9, int scaleX = 10, int scaleY = 10)
+            {
+                Color[] buffer = ToSingleDimension(ScaleColorArray(GenerateColorVariants(color, width, height), scaleX, scaleY));
+                List<string> data = new List<string>();
+                foreach (string s in CreateBMPHeader((width + 1) * scaleX, (height + 1) * scaleY))
+                {
+                    data.Add(s);
+                }
+                foreach (string s in GenerateColorMatrix((width + 1) * scaleX, buffer))
+                {
+                    data.Add(s);
+                }
+                return data.ToArray();
+            }
+            public static string[] CreateColorTransition(Color[] from, Color[] to, int step, int scaleX = 10, int scaleY = 10)
+            {
+                Color[] buffer = ToSingleDimension(ScaleColorArray(GenerateColorTransition(from, to, step), scaleX, scaleY));
+                List<string> data = new List<string>();
+                foreach (string s in CreateBMPHeader(from.Length * scaleX, (step + 2) * scaleY))
+                {
+                    data.Add(s);
+                }
+                foreach (string s in GenerateColorMatrix(from.Length * scaleX, buffer))
+                {
+                    data.Add(s);
+                }
+                return data.ToArray();
+            }
+            public static string[] CreateMidColorTable(Color[] a, Color[] b, int scaleX = 10, int scaleY = 10)
+            {
+                Color[] buffer = ToSingleDimension(ScaleColorArray(GenerateMidColorTable(a, b), scaleX, scaleY));
+                List<string> data = new List<string>();
+                foreach (string s in CreateBMPHeader((a.Length + 1) * scaleX, (b.Length + 1) * scaleY))
+                {
+                    data.Add(s);
+                }
+                foreach (string s in GenerateColorMatrix((a.Length + 1) * scaleX, buffer))
+                {
+                    data.Add(s);
+                }
+                return data.ToArray();
+            }
+            #endregion
+            #region byte[]
+            public static byte[] GetTransitionData(Color[] a, Color[] b, int step = 5, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateColorTransition(a, b, step, scaleX, scaleY));
+            public static byte[] GetMidColorData(Color[] a, Color[] b, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateMidColorTable(a, b, scaleX, scaleY));
+            public static byte[] GetVariantData(Color color, int width = 9, int height = 9, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateColorVariants(color, width, height, scaleX, scaleY));
+            public static byte[] GetPaletteData(Color[,] palette, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreatePalette(palette, scaleX, scaleY));
+            #endregion
         }
         public static class PNG
         {
@@ -567,7 +549,7 @@ namespace TahsinsLibrary
                     if (data[i] == (byte)'I' && data[i + 1] == (byte)'D' && data[i + 2] == (byte)'A' && data[i + 3] == (byte)'T')
                     {
                         string temp = null;
-                        for(int j = i - 4; j < i; j++)
+                        for (int j = i - 4; j < i; j++)
                         {
                             temp += data[j].ToString("X2");
                         }
@@ -593,7 +575,7 @@ namespace TahsinsLibrary
                     if (data[i] == (byte)'I' && data[i + 1] == (byte)'D' && data[i + 2] == (byte)'A' && data[i + 3] == (byte)'T')
                     {
                         string temp = null;
-                        for(int j = i - 4; j < i; j++)
+                        for (int j = i - 4; j < i; j++)
                         {
                             temp += data[j].ToString("X2");
                         }
@@ -742,31 +724,6 @@ namespace TahsinsLibrary
 
             return colors.ToArray();
         }
-        public static Color[] ModifyColorArray(Color[] colors, int width, Func<byte, Color> Formula)
-        {
-            Color[] newColors = colors;
-            for (int i = 0; i < newColors.Length / width; i++)
-            {
-                for (int j = 0; j < width; j++)
-                {
-                    newColors[i + j] = Formula((byte)(i + j));
-                }
-            }
-            return newColors;
-        }
-        public static Color[] ModifyColorArray(Color[] colors, int width, Func<byte, byte, Color> Formula)
-        {
-            Color[] newColors = colors;
-            int height = newColors.Length / width;
-            for (int i = 0; i < height; i++)
-            {
-                for (int j = 0; j < width; j++)
-                {
-                    newColors[i * height + j] = Formula((byte)i, (byte)j);
-                }
-            }
-            return newColors;
-        }
         public static Color[] GenerateColorPalette(Color[] colors, int paletteWidth, int paletteHeight, int colorSize)
         {
             if (colors.Length > paletteWidth * paletteHeight)
@@ -848,18 +805,18 @@ namespace TahsinsLibrary
             Color[,] palette = new Color[width + 1, height + 1];
             for (int i = 0; i < width + 1; i++)
             {
-                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(0,0,0,255).r) * i / width);
-                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(0,0,0,255).g) * i / width);
-                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(0,0,0,255).b) * i / width);
-                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(0,0,0,255).a) * i / width);
+                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(0, 0, 0, 255).r) * i / width);
+                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(0, 0, 0, 255).g) * i / width);
+                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(0, 0, 0, 255).b) * i / width);
+                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(0, 0, 0, 255).a) * i / width);
                 palette[i, 0] = new Color(r, g, b, a);
             }
             for (int i = 0; i < height + 1; i++)
             {
-                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(255,255,255,255).r) * i / width);
-                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(255,255,255,255).g) * i / width);
-                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(255,255,255,255).b) * i / width);
-                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(255,255,255,255).a) * i / width);
+                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(255, 255, 255, 255).r) * i / width);
+                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(255, 255, 255, 255).g) * i / width);
+                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(255, 255, 255, 255).b) * i / width);
+                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(255, 255, 255, 255).a) * i / width);
                 palette[0, i] = new Color(r, g, b, a);
             }
             for (int i = 1; i < width + 1; i++)
@@ -886,6 +843,42 @@ namespace TahsinsLibrary
                 }
             }
             return result;
+        }
+        public static Color[,] GenerateColorVariants(Color source, int width, int height)
+        {
+            Color[,] palette = new Color[width + 1, height + 1];
+            for (int i = 0; i < width + 1; i++)
+            {
+                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(0, 0, 0, 255).r) * i / width);
+                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(0, 0, 0, 255).g) * i / width);
+                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(0, 0, 0, 255).b) * i / width);
+                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(0, 0, 0, 255).a) * i / width);
+                palette[i, 0] = new Color(r, g, b, a);
+            }
+            for (int i = 0; i < height + 1; i++)
+            {
+                byte r = (byte)(source.r + CustomCalculation.GoToValue(source.r, new Color(255, 255, 255, 255).r) * i / width);
+                byte g = (byte)(source.g + CustomCalculation.GoToValue(source.g, new Color(255, 255, 255, 255).g) * i / width);
+                byte b = (byte)(source.b + CustomCalculation.GoToValue(source.b, new Color(255, 255, 255, 255).b) * i / width);
+                byte a = (byte)(source.a + CustomCalculation.GoToValue(source.a, new Color(255, 255, 255, 255).a) * i / width);
+                palette[0, i] = new Color(r, g, b, a);
+            }
+            for (int i = 1; i < width + 1; i++)
+            {
+                for (int j = 1; j < height + 1; j++)
+                {
+                    palette[i, j] = palette[i, 0].GetMidColor(palette[0, j]);
+                }
+            }
+            Color[,] temp = new Color[palette.GetLength(0), palette.GetLength(1)];
+            for (int i = 0; i < temp.GetLength(0); i++)
+            {
+                for (int j = 0; j < temp.GetLength(1); j++)
+                {
+                    temp[i, j] = palette[i, j];
+                }
+            }
+            return temp;
         }
         public static Color[] GenerateMidColorTable(Color[] colors, int colorSize)
         {
@@ -987,6 +980,37 @@ namespace TahsinsLibrary
                 }
             }
             return result;
+        }
+        public static Color[,] GenerateColorTransition(Color[] from, Color[] to, int step)
+        {
+            if (from.Length != to.Length) throw new Exception("from and to's length have to be equal");
+            else
+            {
+                step = Math.Max(step, 0);
+                Color[,] palette = new Color[from.Length, step + 2];
+                for (int i = 0; i < palette.GetLength(0); i++)
+                {
+                    for (int j = 1; j < palette.GetLength(1) - 1; j++)
+                    {
+                        byte r = (byte)(from[i].r + CustomCalculation.GoToValue(from[i].r, to[i].r) * j / step);
+                        byte g = (byte)(from[i].g + CustomCalculation.GoToValue(from[i].g, to[i].g) * j / step);
+                        byte b = (byte)(from[i].b + CustomCalculation.GoToValue(from[i].b, to[i].b) * j / step);
+                        byte a = (byte)(from[i].a + CustomCalculation.GoToValue(from[i].a, to[i].a) * j / step);
+                        palette[i, j] = new Color(r, g, b, a);
+                    }
+                    palette[i, step + 1] = to[i];
+                    palette[i, 0] = from[i];
+                }
+                Color[,] temp = new Color[palette.GetLength(0), palette.GetLength(1)];
+                for (int i = 0; i < temp.GetLength(0); i++)
+                {
+                    for (int j = 0; j < temp.GetLength(1); j++)
+                    {
+                        temp[i, j] = palette[i, j];
+                    }
+                }
+                return temp;
+            }
         }
         public static Color[] ToSingleDimension(Color[,] resource)
         {
