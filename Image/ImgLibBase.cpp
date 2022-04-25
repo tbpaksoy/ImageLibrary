@@ -286,15 +286,42 @@ namespace Tahsin
     vector<vector<T>> ScaleVector(vector<vector<T>> source, int x = 10, int y = 10)
     {
         vector<vector<T>> result;
-        for(int i=0 ;i < source.size()*y; i++)
+        for (int i = 0; i < source.size() * y; i++)
         {
             vector<T> sub;
-            for(int j = 0 ; j < source[0].size()*x; j++)
+            for (int j = 0; j < source[0].size() * x; j++)
             {
-                sub.push_back(source[i/y][j/x]);
+                sub.push_back(source[i / y][j / x]);
             }
             result.push_back(sub);
         }
         return result;
+    }
+    vector<vector<Color>> CreateColorTransiton(vector<Color> a, vector<Color> b, int step = 5)
+    {
+        int decised = min(a.size(), b.size());
+        vector<vector<Color>> result;
+        for (int i = 0; i < decised; i++)
+        {
+            vector<Color> transition;
+            Color from = a[i];
+            Color to = b[i];
+            for (int j = 0; j < step + 2; j++)
+            {
+                char r = from.r + (char)(GoToValue(from.r, to.r) * j / step);
+                char g = from.g + (char)(GoToValue(from.g, to.g) * j / step);
+                char b = from.b + (char)(GoToValue(from.b, to.b) * j / step);
+                char a = from.a + (char)(GoToValue(from.a, to.a) * j / step);
+                transition.push_back(Color(r, g, b, a));
+            }
+            return result;
+        }
+    }
+    float GoToValue(float a, float b)
+    {
+        if (b < a)
+            return -abs(b - a);
+        else
+            abs(a - b);
     }
 }

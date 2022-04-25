@@ -18,7 +18,8 @@ vector<string> CreateBitmapInfoHeader(int width, int height)
     temp.push_back(GetHexValue('M'));
     length = 8;
     int paddingCount = width * 3 % 4;
-    cout << endl << paddingCount << endl;
+    cout << endl
+         << paddingCount << endl;
     string s = GetHexValue(54 + width * height * 3 + height * paddingCount);
     string *sa = GroupAndReverse(s, 2);
     for (int i = 0; i < s.size() / 2; i++)
@@ -104,16 +105,12 @@ int main()
 {
     srand(time(NULL));
     vector<vector<Color>> cols;
-    for (int i = 0; i < 5; i++)
-    {
-        vector<Color> sub;
-        for (int j = 0; j < 5; j++)
-        {
-            sub.push_back(Color(rand() % 256, rand() % 256, rand() % 256, rand() % 256));
-        }
-        cols.push_back(sub);
-    }
-    vector<string> data = GetBMPData(ScaleVector(cols, 7, 20));
+    vector<Color> a{Color("FA45FD"), Color("FFAA55")};
+    vector<Color> b{Color("AADDCC"), Color("FFDDA1")};
+    cols.push_back(a);
+    cols.push_back(b);
+    cols = ScaleVector<Color>(cols, 100, 200);
+    vector<string> data = GetBMPData(cols);
     ofstream fs("a.bmp", std::ofstream::binary);
     fs.write(ToByteArray(data), data.size());
     fs.close();
