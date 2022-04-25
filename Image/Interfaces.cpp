@@ -1,5 +1,5 @@
 #include <string>
-#include "Color.cpp"
+#include "ImgLibBase.cpp"
 using namespace std;
 namespace Tahsin
 {
