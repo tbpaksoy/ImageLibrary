@@ -317,6 +317,45 @@ namespace Tahsin
             return result;
         }
     }
+    vector<vector<Color>> CreateColorVariants(Color color, int width = 5, int height = 5)
+    {
+        Color white = Color(255, 255, 255, 255);
+        Color black = Color(255, 255, 255, 255);
+        vector<Color> toWhite;
+        vector<Color> toBlack;
+        toWhite.push_back(color);
+        toBlack.push_back(color);
+        for (int i = 0; i < width; i++)
+        {
+            char r = (char)(color.r + GoToValue(color.r, black.r) * i / width);
+            char g = (char)(color.g + GoToValue(color.g, black.g) * i / width);
+            char b = (char)(color.b + GoToValue(color.b, black.b) * i / width);
+            char a = (char)(color.a + GoToValue(color.a, black.a) * i / width);
+            toBlack.push_back(Color(r, g, b, a));
+        }
+        for (int i = 0; i < height; i++)
+        {
+            char r = (char)(color.r + GoToValue(color.r, black.r) * i / width);
+            char g = (char)(color.g + GoToValue(color.g, black.g) * i / width);
+            char b = (char)(color.b + GoToValue(color.b, black.b) * i / width);
+            char a = (char)(color.a + GoToValue(color.a, black.a) * i / width);
+            toWhite.push_back(Color(r, g, b, a));
+        }
+        vector<vector<Color>> result;
+        result.push_back(toBlack);
+        for (int i = 0; i < height; i++)
+        {
+            vector<Color> temp;
+            temp.push_back(toWhite[i]);
+            for (int j = 0; j < width; j++)
+            {
+                temp.push_back(toWhite[i].GetMidColor(toBlack[j]));
+            }
+            result.push_back(temp);
+        }
+        return result;
+    }
+    
     float GoToValue(float a, float b)
     {
         if (b < a)

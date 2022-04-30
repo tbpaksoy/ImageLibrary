@@ -100,7 +100,6 @@ vector<string> GetBMPData(vector<vector<Color>> colors)
     }
     return data;
 }
-
 int main()
 {
     srand(time(NULL));
