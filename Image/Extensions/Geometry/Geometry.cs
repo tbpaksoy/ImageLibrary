@@ -101,10 +101,8 @@ namespace TahsinsLibrary.Geometry
     }
     public abstract class Shape2D
     {
-        public abstract Vector2D[] outerPoints { get; }
         public abstract float area { get; }
         public abstract Vector2D[] points { get; }
-        public abstract void Construct();
         public abstract Vector2D centroid { get; }
     }
     public sealed class Triangle : Shape2D
@@ -115,13 +113,11 @@ namespace TahsinsLibrary.Geometry
             this.pointB = pointB;
             this.pointC = pointC;
         }
-        public (Vector2D, Vector2D)[] edges;
         public Vector2D pointA { get; private set; }
         public Vector2D pointB { get; private set; }
         public Vector2D pointC { get; private set; }
         public override float area => MathF.Abs(pointA.x * pointB.y + pointB.x * pointC.y + pointC.x * pointA.y - pointA.y * pointB.x - pointB.y * pointC.x - pointC.y * pointA.x) / 2f;
         public override Vector2D[] points => new Vector2D[] { pointA, pointB, pointC };
-        public override Vector2D[] outerPoints => points;
 
         public override Vector2D centroid => (pointA + pointB + pointC) / 3;
 
@@ -145,16 +141,6 @@ namespace TahsinsLibrary.Geometry
                 }
             }
             return result.ToArray();
-        }
-
-        public override void Construct()
-        {
-            edges = new (Vector2D, Vector2D)[]
-            {
-                (pointA,pointB),
-                (pointB,pointC),
-                (pointA,pointC)
-            };
         }
         public bool IsPointInside(Vector2D point)
         {
@@ -187,7 +173,6 @@ namespace TahsinsLibrary.Geometry
             }
         }
         public override Vector2D[] points => vertices;
-        public override Vector2D[] outerPoints => throw new NotImplementedException();
 
         public override Vector2D centroid
         {
@@ -201,11 +186,6 @@ namespace TahsinsLibrary.Geometry
                 center /= vertices.Length;
                 return center;
             }
-        }
-
-        public override void Construct()
-        {
-
         }
         private bool[] CalculateConcavity()
         {
@@ -334,7 +314,28 @@ namespace TahsinsLibrary.Geometry
     }
     public sealed class Line2D
     {
-        Vector2D from;
-        Vector2D to;
+        public Vector2D from;
+        public Vector2D to;
+        public Vector2D[] GetPoints()
+        {
+            int dx = (int)(to.x - from.x);
+            int dy = (int)(to.y - from.y);
+            int d = 2 * dy - dx;
+            int y = 0;
+            List<Vector2D> result = new List<Vector2D>();
+
+            for (int x = (int)from.x; x < (int)to.x; x++)
+            {
+                result.Add(new(x, y));
+                if (d > 0)
+                {
+                    y++;
+                    d -= 2 * dx;
+                }
+                d += 2 * dy;
+            }
+
+            return result.ToArray();
+        }
     }
 }
