@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "viKsvf+ZynzE5oi0huijEG2ebxU1xhk7i9OI0vgbWBV9PZaHJLfiDLDNKMADG3SMv42gl38kUTffWnaq1lnOSw==",
+  "dgSpecHash": "JAtbdbGIP6p/g6LRP+5LIz+Zdoja5REbIbMO5XLbZ12Lb4P2xYe4pBpfKmDxTRxgqY8wmBAZZMSaoGZ/RS5FUw==",
   "success": true,
   "projectFilePath": "C:\\Users\\Tahsin\\Desktop\\Image\\Image.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Tahsin\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
+    "C:\\Users\\Tahsin\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512",
+    "C:\\Users\\Tahsin\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\5.0.17\\microsoft.netcore.app.host.win-x64.5.0.17.nupkg.sha512"
   ],
   "logs": []
 }

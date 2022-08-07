@@ -535,6 +535,163 @@ namespace TahsinsLibrary
             public static byte[] GetMidColorData(Color[] a, Color[] b, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateMidColorTable(a, b, scaleX, scaleY));
             public static byte[] GetVariantData(Color color, int width = 9, int height = 9, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateColorVariants(color, width, height, scaleX, scaleY));
             public static byte[] GetPaletteData(Color[,] palette, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreatePalette(palette, scaleX, scaleY));
+            public static byte[] GetArray(Color[,] colors)
+            {
+                List<string> data = new List<string>();
+                foreach (string s in CreateBMPHeader(colors.GetLength(0), colors.GetLength(1)))
+                {
+                    data.Add(s);
+                }
+                Color[] temp = new Color[colors.GetLength(0) * colors.GetLength(1)];
+                for (int i = 0; i < colors.GetLength(0); i++)
+                {
+                    for (int j = 0; j < colors.GetLength(1); j++)
+                    {
+                        temp[i * colors.GetLength(0) + j] = colors[i, j];
+                    }
+                }
+                foreach (string s in GenerateColorMatrix(colors.GetLength(0), temp))
+                {
+                    data.Add(s);
+                }
+                return CustomCalculation.ToByteArray(data.ToArray());
+            }
+            public static byte[] GenerateColorMatrix(Color[,] resource)
+            {
+                List<byte> data = new List<byte>();
+                int padding = resource.GetLength(0) * 3 % 4;
+                for (int i = 0; i < resource.GetLength(0); i++)
+                {
+                    for (int j = 0; j < resource.GetLength(1); j++)
+                    {
+                        data.Add(resource[i, j].b);
+                        data.Add(resource[i, j].g);
+                        data.Add(resource[i, j].r);
+                    }
+                    for (int j = 0; j < padding; j++)
+                    {
+                        data.Add(0);
+                    }
+                }
+                return data.ToArray();
+            }
+            public static byte[] GenerateBMPHeader(Color[,] resource)
+            {
+                List<byte> data = new List<byte>();
+                #region BMP Header
+                data.Add((byte)'B');
+                data.Add((byte)'M');
+
+                byte[] temp = new byte[4];
+                int value = 54 + (resource.GetLength(0) + resource.GetLength(0) * 3 % 4) * resource.GetLength(1);
+                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                {
+                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
+                    value -= byte.MaxValue;
+                }
+                foreach (byte b in temp)
+                {
+                    data.Add(b);
+                }
+
+                for (int i = 0; i < 4; i++) data.Add(0);
+
+                data.Add(54);
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+                #endregion
+                #region DIB Header
+                data.Add(40);
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+
+                value = resource.GetLength(0);
+                temp = new byte[4];
+                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                {
+                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
+                    value -= byte.MaxValue;
+                }
+                foreach (byte b in temp)
+                {
+                    data.Add(b);
+                }
+
+                value = resource.GetLength(1);
+                temp = new byte[4];
+                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                {
+                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
+                    value -= byte.MaxValue;
+                }
+                foreach (byte b in temp)
+                {
+                    data.Add(b);
+                }
+
+                data.Add(1);
+                data.Add(0);
+
+                data.Add(24);
+                data.Add(0);
+
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+
+                value = (resource.GetLength(0) + resource.GetLength(0) * 3 % 4) * resource.GetLength(1);
+                temp = new byte[4];
+                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                {
+                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
+                    value -= byte.MaxValue;
+                }
+                foreach (byte b in temp)
+                {
+                    data.Add(b);
+                }
+
+                value = 2835;
+                temp = new byte[4];
+                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                {
+                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
+                    value -= byte.MaxValue;
+                }
+                foreach (byte b in temp)
+                {
+                    data.Add(b);
+                }
+
+                value = 2835;
+                temp = new byte[4];
+                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                {
+                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
+                    value -= byte.MaxValue;
+                }
+                foreach (byte b in temp)
+                {
+                    data.Add(b);
+                }
+
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+                data.Add(0);
+
+                
+                #endregion
+                return data.ToArray();
+            }
             #endregion
         }
         public static class PNG

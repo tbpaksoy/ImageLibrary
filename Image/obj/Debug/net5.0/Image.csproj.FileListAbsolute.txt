@@ -3,7 +3,6 @@ C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\Image.deps.json
 C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\Image.runtimeconfig.json
 C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\Image.runtimeconfig.dev.json
 C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\Image.dll
-C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\ref\Image.dll
 C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\Image.pdb
 C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.csproj.AssemblyReference.cache
 C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.GeneratedMSBuildEditorConfig.editorconfig
@@ -35,3 +34,4 @@ C:\Users\Tahsin\Desktop\ImageLibrary\obj\Debug\net5.0\Image.pdb
 C:\Users\Tahsin\Desktop\ImageLibrary\obj\Debug\net5.0\Image.genruntimeconfig.cache
 C:\Users\Tahsin\Desktop\Image\bin\Debug\net5.0\Newtonsoft.Json.dll
 C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\Image.csproj.CopyComplete
+C:\Users\Tahsin\Desktop\Image\obj\Debug\net5.0\refint\Image.dll
