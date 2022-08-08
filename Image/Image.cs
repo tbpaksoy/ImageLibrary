@@ -11,7 +11,7 @@ namespace TahsinsLibrary
 {
     public interface IColorTurnable
     {
-        public Color[] TurnColor();
+        public Color[,] TurnColor();
     }
     public interface IExportable
     {
@@ -457,84 +457,64 @@ namespace TahsinsLibrary
 
                 return data.ToArray();
             }
-            public static string[] CreateDirectColor(Color[] colors, int width, int height)
-            {
-                if (colors.Length != width * height) return null;
-                else
-                {
-                    List<string> data = new List<string>();
-                    string[] header = CreateBMPHeader(width, height);
-                    foreach (string s in header) data.Add(s);
-                    string[] colorData = GenerateColorMatrix(width, colors);
-                    foreach (string s in colorData) data.Add(s);
-                    return data.ToArray();
-                }
-            }
-
-            public static string[] CreatePalette(Color[,] colors, int scaleX = 10, int scaleY = 10)
-            {
-                Color[] buffer = ToSingleDimension(ScaleColorArray(colors, scaleX, scaleY));
-                List<string> data = new List<string>();
-                string[] header = CreateBMPHeader(colors.GetLength(0) * scaleX, colors.GetLength(1) * scaleY);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] palette = GenerateColorMatrix(colors.GetLength(0) * scaleX, buffer);
-                foreach (string s in palette)
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateColorVariants(Color color, int width = 9, int height = 9, int scaleX = 10, int scaleY = 10)
-            {
-                Color[] buffer = ToSingleDimension(ScaleColorArray(GenerateColorVariants(color, width, height), scaleX, scaleY));
-                List<string> data = new List<string>();
-                foreach (string s in CreateBMPHeader((width + 1) * scaleX, (height + 1) * scaleY))
-                {
-                    data.Add(s);
-                }
-                foreach (string s in GenerateColorMatrix((width + 1) * scaleX, buffer))
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateColorTransition(Color[] from, Color[] to, int step, int scaleX = 10, int scaleY = 10)
-            {
-                Color[] buffer = ToSingleDimension(ScaleColorArray(GenerateColorTransition(from, to, step), scaleX, scaleY));
-                List<string> data = new List<string>();
-                foreach (string s in CreateBMPHeader(from.Length * scaleX, (step + 2) * scaleY))
-                {
-                    data.Add(s);
-                }
-                foreach (string s in GenerateColorMatrix(from.Length * scaleX, buffer))
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateMidColorTable(Color[] a, Color[] b, int scaleX = 10, int scaleY = 10)
-            {
-                Color[] buffer = ToSingleDimension(ScaleColorArray(GenerateMidColorTable(a, b), scaleX, scaleY));
-                List<string> data = new List<string>();
-                foreach (string s in CreateBMPHeader((a.Length + 1) * scaleX, (b.Length + 1) * scaleY))
-                {
-                    data.Add(s);
-                }
-                foreach (string s in GenerateColorMatrix((a.Length + 1) * scaleX, buffer))
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
             #endregion
             #region byte[]
-            public static byte[] GetTransitionData(Color[] a, Color[] b, int step = 5, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateColorTransition(a, b, step, scaleX, scaleY));
-            public static byte[] GetMidColorData(Color[] a, Color[] b, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateMidColorTable(a, b, scaleX, scaleY));
-            public static byte[] GetVariantData(Color color, int width = 9, int height = 9, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreateColorVariants(color, width, height, scaleX, scaleY));
-            public static byte[] GetPaletteData(Color[,] palette, int scaleX = 10, int scaleY = 10) => CustomCalculation.ToByteArray(CreatePalette(palette, scaleX, scaleY));
+            public static byte[] GetTransitionData(Color[] a, Color[] b, int step = 5, int scaleX = 10, int scaleY = 10)
+            {
+                Color[,] colorData = GenerateColorTransition(a, b, step);
+                List<byte> data = new();
+                foreach (byte by in GetBMPHeader(colorData))
+                {
+                    data.Add(by);
+                }
+                foreach (byte by in GetColorMatrix(colorData))
+                {
+                    data.Add(by);
+                }
+                return data.ToArray();
+            }
+            public static byte[] GetMidColorData(Color[] a, Color[] b, int scaleX = 10, int scaleY = 10)
+            {
+                Color[,] colorData = ScaleColorArray(GenerateMidColorTable(a, b), scaleX, scaleY);
+                List<byte> data = new();
+                foreach (byte by in GetBMPHeader(colorData))
+                {
+                    data.Add(by);
+                }
+                foreach (byte by in GetColorMatrix(colorData))
+                {
+                    data.Add(by);
+                }
+                return data.ToArray();
+            }
+            public static byte[] GetVariantData(Color color, int width = 9, int height = 9, int scaleX = 10, int scaleY = 10)
+            {
+                Color[,] colorData = ScaleColorArray(GenerateColorVariants(color, width, height), scaleX, scaleY);
+                List<byte> data = new();
+                foreach (byte b in GetBMPHeader(colorData))
+                {
+                    data.Add(b);
+                }
+                foreach (byte b in GetColorMatrix(colorData))
+                {
+                    data.Add(b);
+                }
+                return data.ToArray();
+            }
+            public static byte[] GetPaletteData(Color[,] palette, int scaleX = 10, int scaleY = 10)
+            {
+                Color[,] colorData = ScaleColorArray(palette, scaleX, scaleY);
+                List<byte> data = new();
+                foreach (byte b in GetBMPHeader(colorData))
+                {
+                    data.Add(b);
+                }
+                foreach (byte b in GetColorMatrix(colorData))
+                {
+                    data.Add(b);
+                }
+                return data.ToArray();
+            }
             public static byte[] GetArray(Color[,] colors)
             {
                 List<string> data = new List<string>();
@@ -556,7 +536,7 @@ namespace TahsinsLibrary
                 }
                 return CustomCalculation.ToByteArray(data.ToArray());
             }
-            public static byte[] GenerateColorMatrix(Color[,] resource)
+            public static byte[] GetColorMatrix(Color[,] resource)
             {
                 List<byte> data = new List<byte>();
                 int padding = resource.GetLength(0) * 3 % 4;
@@ -575,20 +555,25 @@ namespace TahsinsLibrary
                 }
                 return data.ToArray();
             }
-            public static byte[] GenerateBMPHeader(Color[,] resource)
+            public static byte[] GetBMPHeader(Color[,] resource)
             {
                 List<byte> data = new List<byte>();
                 #region BMP Header
                 data.Add((byte)'B');
                 data.Add((byte)'M');
 
-                byte[] temp = new byte[4];
-                int value = 54 + (resource.GetLength(0) + resource.GetLength(0) * 3 % 4) * resource.GetLength(1);
-                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                int paddingCount = resource.GetLength(0) * 3 % 4;
+
+                int value = 54 + resource.GetLength(0) * resource.GetLength(1) * 3 + resource.GetLength(1) * paddingCount;
+                string s = value.ToString("X8");
+                byte[] temp = new byte[s.Length / 2];
+
+
+                for (int i = 0; i < temp.Length; i++)
                 {
-                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
-                    value -= byte.MaxValue;
+                    temp[i] = Convert.ToByte(s.Substring(i * 2, 2), 16);
                 }
+                System.Array.Reverse(temp);
                 foreach (byte b in temp)
                 {
                     data.Add(b);
@@ -608,24 +593,26 @@ namespace TahsinsLibrary
                 data.Add(0);
 
                 value = resource.GetLength(0);
-                temp = new byte[4];
-                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                s = value.ToString("X8");
+                temp = new byte[s.Length / 2];
+                for (int i = 0; i < temp.Length; i++)
                 {
-                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
-                    value -= byte.MaxValue;
+                    temp[i] = Convert.ToByte(s.Substring(i * 2, 2), 16);
                 }
+                System.Array.Reverse(temp);
                 foreach (byte b in temp)
                 {
                     data.Add(b);
                 }
 
                 value = resource.GetLength(1);
-                temp = new byte[4];
-                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                s = value.ToString("X8");
+                temp = new byte[s.Length / 2];
+                for (int i = 0; i < temp.Length; i++)
                 {
-                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
-                    value -= byte.MaxValue;
+                    temp[i] = Convert.ToByte(s.Substring(i * 2, 2), 16);
                 }
+                System.Array.Reverse(temp);
                 foreach (byte b in temp)
                 {
                     data.Add(b);
@@ -642,37 +629,41 @@ namespace TahsinsLibrary
                 data.Add(0);
                 data.Add(0);
 
-                value = (resource.GetLength(0) + resource.GetLength(0) * 3 % 4) * resource.GetLength(1);
-                temp = new byte[4];
-                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                value = (resource.GetLength(0) + paddingCount) * 3 * resource.GetLength(1);
+                Console.WriteLine(paddingCount);
+                s = value.ToString("X8");
+                temp = new byte[s.Length / 2];
+                for (int i = 0; i < temp.Length; i++)
                 {
-                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
-                    value -= byte.MaxValue;
+                    temp[i] = Convert.ToByte(s.Substring(i * 2, 2), 16);
                 }
+                System.Array.Reverse(temp);
                 foreach (byte b in temp)
                 {
                     data.Add(b);
                 }
 
                 value = 2835;
-                temp = new byte[4];
-                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                s = value.ToString("X8");
+                temp = new byte[s.Length / 2];
+                for (int i = 0; i < temp.Length; i++)
                 {
-                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
-                    value -= byte.MaxValue;
+                    temp[i] = Convert.ToByte(s.Substring(i * 2, 2), 16);
                 }
+                System.Array.Reverse(temp);
                 foreach (byte b in temp)
                 {
                     data.Add(b);
                 }
 
                 value = 2835;
-                temp = new byte[4];
-                for (int i = temp.Length - 1; i > -1 && value > 0; i--)
+                s = value.ToString("X8");
+                temp = new byte[s.Length / 2];
+                for (int i = 0; i < temp.Length; i++)
                 {
-                    temp[i] = (byte)MathF.Min(value, byte.MaxValue);
-                    value -= byte.MaxValue;
+                    temp[i] = Convert.ToByte(s.Substring(i * 2, 2), 16);
                 }
+                System.Array.Reverse(temp);
                 foreach (byte b in temp)
                 {
                     data.Add(b);
@@ -688,10 +679,11 @@ namespace TahsinsLibrary
                 data.Add(0);
                 data.Add(0);
 
-                
+
                 #endregion
                 return data.ToArray();
             }
+
             #endregion
         }
         public static class PNG

@@ -363,7 +363,7 @@ namespace TahsinsLibrary.Analyze
             }
             return list;
         }
-        public static List<(int, int)> CheckAdcentivty<T>(Func<T,bool> condition, int x, int y, T[,] source, int limit = int.MaxValue)
+        public static List<(int, int)> CheckAdcentivty<T>(Func<T, bool> condition, int x, int y, T[,] source, int limit = int.MaxValue)
         {
             throw new Exception();
         }
@@ -455,9 +455,8 @@ namespace TahsinsLibrary.Analyze
             {
                 for (int i = start; i < end; i++)
                 {
-                    Console.WriteLine(i.ToString("X2") + "->" + comp[i].ToString());
+                    Console.WriteLine(i.ToString("X2") + "->" + comp[i].ToString() + "->" + (comp[i] ? null : a.GetValue(i).ToString() + " != " + b.GetValue(i).ToString()));
                 }
-                Console.WriteLine("+:" + equal.ToString() + ",-:" + notEqual.ToString());
             }
 
             return (comp, equal, notEqual);
@@ -524,11 +523,11 @@ namespace TahsinsLibrary
         {
             ConsoleColor originalColor = Console.ForegroundColor;
             int index = 0;
-            foreach(object o in e)
+            foreach (object o in e)
             {
                 Console.ForegroundColor = colors[index];
                 Console.Write(o);
-                if(between != null) Console.Write(between);
+                if (between != null) Console.Write(between);
                 index = (index + 1) % colors.Length;
             }
             Console.ForegroundColor = originalColor;

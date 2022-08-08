@@ -154,10 +154,6 @@ namespace TahsinsLibrary.Geometry
             float w2 = p.y - a.y - w1 * (b.y - a.y);
             w2 /= c.y - a.y;
             return w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
-            /*bool condition1 = ((p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x)) > 1f;
-            bool condition2 = ((p.x - b.x) * (c.y - b.y) - (p.y - b.y) * (c.x - b.x)) > 1f;
-            bool condition3 = ((p.x - c.x) * (a.y - c.y) - (p.y - c.y) * (a.x - c.x)) > 1f;
-            return condition1 && condition2 && condition3;*/
         }
     }
     public class FreePolygon2D : Shape2D

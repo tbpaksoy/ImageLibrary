@@ -425,18 +425,14 @@ public class GeoMap : IExportable, IColorTurnable
             }
         }
     }
-    public virtual Color[] TurnColor()
+    public virtual Color[,] TurnColor()
     {
-        Color[] colors = new Color[biomes.GetLength(0) * biomes.GetLength(1)];
-        for (int i = 0; i < biomes.GetLength(0); i++)
+        Color[,] colors = new Color[biomes.GetLength(0), biomes.GetLength(1)];
+        for (int i = 0; i < colors.GetLength(0); i++)
         {
-            for (int j = 0; j < biomes.GetLength(1); j++)
+            for (int j = 0; j < colors.GetLength(1); j++)
             {
-                if (biomes[i, j] == null)
-                {
-                    colors[i * biomes.GetLength(1) + j] = blank.color;
-                }
-                else colors[i * biomes.GetLength(1) + j] = biomes[i, j].color;
+                colors[i, j] = biomes[i, j].color;
             }
         }
         return colors;
@@ -447,7 +443,7 @@ public class GeoMap : IExportable, IColorTurnable
         {
             FileStream fs = new FileStream(path + $"//{name}.bmp", FileMode.Create);
             Console.WriteLine("Writing");
-            fs.Write((CustomCalculation.ToByteArray(TahsinsLibrary.Image.BMP.CreateDirectColor(TurnColor(), biomes.GetLength(1), biomes.GetLength(0)))));
+            fs.Write(Image.BMP.GetArray(TurnColor()));
             fs.Flush();
             fs.Close();
             Console.WriteLine("Exported");
@@ -526,7 +522,7 @@ public class PoliticalMap : GeoMap
             }
         }
         Console.WriteLine("Designated");
-        foreach(PoliticalParcel p in parcels) Console.Write(p.size + ", ");
+        foreach (PoliticalParcel p in parcels) Console.Write(p.size + ", ");
         Console.WriteLine();
     }
     public void PlaceCountries(int seed)
@@ -710,15 +706,15 @@ public class PoliticalMap : GeoMap
         }
         ownership = output;
     }
-    public override Color[] TurnColor()
+    public override Color[,] TurnColor()
     {
-        Color[] result = base.TurnColor();
+        Color[,] result = base.TurnColor();
         foreach ((int, int) i in centers)
         {
             List<(int, int)> borders = AnalyzeF.EdgeDetect<Country>(ownership[i.Item1, i.Item2], i.Item1, i.Item2, ownership);
             foreach ((int, int) j in borders)
             {
-                result[j.Item1 * ownership.GetLength(1) + j.Item2] = ownership[i.Item1, i.Item2].color;
+                result[j.Item1, ownership.GetLength(1) + j.Item2] = ownership[i.Item1, i.Item2].color;
             }
         }
         return result;
