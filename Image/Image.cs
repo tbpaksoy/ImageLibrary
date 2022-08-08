@@ -216,12 +216,12 @@ namespace TahsinsLibrary
     public struct MaterialForUnity : IExportable
     {
         public string name { get; set; }
-        public Color[] albedo;
-        public byte[] metallic;
-        public byte[] smoothness;
-        public Color[] emission;
+        public Color[,] albedo;
+        public byte[,] metallic;
+        public byte[,] smoothness;
+        public Color[,] emission;
         public int paletteSize;
-        public MaterialForUnity(string name, Color[] albedo, byte[] metallic, byte[] smoothness, Color[] emission, int paletteSize)
+        public MaterialForUnity(string name, Color[,] albedo, byte[,] metallic, byte[,] smoothness, Color[,] emission, int paletteSize)
         {
             this.name = name;
             this.albedo = albedo;
@@ -238,43 +238,25 @@ namespace TahsinsLibrary
             ) return;
             int decised = (int)MathF.Ceiling(MathF.Sqrt(albedo.Length));
             FileStream fs = new FileStream($"{path}\\{name}Albedo.bmp", FileMode.Create);
-            byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(albedo, decised, decised, paletteSize));
+            byte[] data = Image.BMP.GetPaletteData(albedo, paletteSize, paletteSize);
             fs.Write(data);
             fs.Flush();
             fs.Close();
             fs = new FileStream($"{path}\\{name}Metallic.bmp", FileMode.Create);
-            data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(GetMetallic(), decised, decised, paletteSize));
+            data = Image.BMP.GetPaletteData(Image.ToGreyScale(metallic), paletteSize, paletteSize);
             fs.Write(data);
             fs.Flush();
             fs.Close();
             fs = new FileStream($"{path}\\{name}Smoothness.bmp", FileMode.Create);
-            data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(GetSmoothness(), decised, decised, paletteSize));
+            data = Image.BMP.GetPaletteData(Image.ToGreyScale(smoothness), paletteSize, paletteSize);
             fs.Write(data);
             fs.Flush();
             fs.Close();
             fs = new FileStream($"{path}\\{name}Emission.bmp", FileMode.Create);
-            data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(emission, decised, decised, paletteSize));
+            data = Image.BMP.GetPaletteData(emission, paletteSize, paletteSize);
             fs.Write(data);
             fs.Flush();
             fs.Close();
-        }
-        public Color[] GetMetallic()
-        {
-            Color[] result = new Color[metallic.Length];
-            for (int i = 0; i < result.Length; i++)
-            {
-                result[i] = new Color(metallic[i], metallic[i], metallic[i]);
-            }
-            return result;
-        }
-        public Color[] GetSmoothness()
-        {
-            Color[] result = new Color[smoothness.Length];
-            for (int i = 0; i < result.Length; i++)
-            {
-                result[i] = new Color(smoothness[i], smoothness[i], smoothness[i]);
-            }
-            return result;
         }
         public bool IsReadyToExport()
         {
@@ -290,34 +272,16 @@ namespace TahsinsLibrary
     public struct MaterialForBlender : IExportable
     {
         public string name { get; set; }
-        public Color[] baseColor;
-        public byte[] metallic;
-        public byte[] specular;
-        public byte[] roughness;
-        public Color[] emission;
+        public Color[,] baseColor;
+        public byte[,] metallic;
+        public byte[,] specular;
+        public byte[,] roughness;
+        public Color[,] emission;
         public int paletteSize;
         public bool IsReadyToExport()
         {
             if (paletteSize < 1) return false;
             return true;
-        }
-        public Color[] GetMetallic()
-        {
-            Color[] result = new Color[metallic.Length];
-            for (int i = 0; i < result.Length; i++)
-            {
-                result[i] = new Color(metallic[i], metallic[i], metallic[i]);
-            }
-            return result;
-        }
-        public Color[] GetRoughness()
-        {
-            Color[] result = new Color[roughness.Length];
-            for (int i = 0; i < result.Length; i++)
-            {
-                result[i] = new Color(roughness[i], roughness[i], roughness[i]);
-            }
-            return result;
         }
         public void Export(string path, string name)
         {
@@ -333,7 +297,7 @@ namespace TahsinsLibrary
             if (baseColor != null)
             {
                 FileStream fs = new FileStream($"{path}\\{name}BaseColor.bmp", FileMode.Create);
-                byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(baseColor, decised, decised, paletteSize));
+                byte[] data = Image.BMP.GetPaletteData(baseColor);
                 fs.Write(data);
                 fs.Flush();
                 fs.Close();
@@ -341,7 +305,7 @@ namespace TahsinsLibrary
             if (metallic != null)
             {
                 FileStream fs = new FileStream($"{path}\\{name}Metallic.bmp", FileMode.Create);
-                byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(GetMetallic(), decised, decised, paletteSize));
+                byte[] data = Image.BMP.GetPaletteData(Image.ToGreyScale(metallic));
                 fs.Write(data);
                 fs.Flush();
                 fs.Close();
@@ -349,7 +313,7 @@ namespace TahsinsLibrary
             if (roughness != null)
             {
                 FileStream fs = new FileStream($"{path}\\{name}Roughness.bmp", FileMode.Create);
-                byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(GetRoughness(), decised, decised, paletteSize));
+                byte[] data = Image.BMP.GetPaletteData(Image.ToGreyScale(roughness));
                 fs.Write(data);
                 fs.Flush();
                 fs.Close();
@@ -357,7 +321,7 @@ namespace TahsinsLibrary
             if (emission != null)
             {
                 FileStream fs = new FileStream($"{path}\\{name}Emission.bmp", FileMode.Create);
-                byte[] data = CustomCalculation.ToByteArray(Image.BMP.CreatePalette(emission, decised, decised, paletteSize));
+                byte[] data = Image.BMP.GetPaletteData(emission);
                 fs.Write(data);
                 fs.Flush();
                 fs.Close();
@@ -370,94 +334,6 @@ namespace TahsinsLibrary
 
         public static class BMP
         {
-            #region string[]
-            public static string[] GenerateColorMatrix(int width, Color[] resource)
-            {
-                List<string> temp = new List<string>();
-                int height = resource.Length / width;
-                int paddingCount = width * 3 % 4;
-                CustomCalculation.Length = 2;
-                for (int i = 0, q = 0; i < height; i++)
-                {
-                    for (int j = 0; j < width; j++, q++)
-                    {
-                        int index = q;
-                        temp.Add(CustomCalculation.GetHex(resource[index].b));
-                        //Console.Write(" "+temp[temp.Count-1]);
-                        temp.Add(CustomCalculation.GetHex(resource[index].g));
-                        //Console.Write(temp[temp.Count-1]);
-                        temp.Add(CustomCalculation.GetHex(resource[index].r));
-                        //Console.Write(temp[temp.Count-1]+" ");
-                    }
-                    for (int k = 0; k < paddingCount; k++)
-                    {
-                        temp.Add(CustomCalculation.GetHex(0));
-                        //Console.Write(temp[temp.Count-1]);
-                    }
-                    //Console.WriteLine();
-                }
-                //Console.WriteLine(temp.Count);
-
-                return temp.ToArray();
-            }
-            public static string[] CreatePalette(Color[] colors, int paletteWidth, int paletteHeight, int paletteSize)
-            {
-                List<string> data = new List<string>();
-                string[] header = CreateBMPHeader(paletteWidth * paletteSize, paletteHeight * paletteSize);
-                foreach (string s in header)
-                {
-                    data.Add(s);
-                }
-                string[] palette = GenerateColorMatrix(paletteWidth * paletteSize, GenerateColorPalette(colors, paletteWidth, paletteHeight, paletteSize));
-                foreach (string s in palette)
-                {
-                    data.Add(s);
-                }
-                return data.ToArray();
-            }
-            public static string[] CreateBMPHeader(int width, int height)
-            {
-                List<string> data = new List<string>();
-                CustomCalculation.Length = 2;
-
-                data.Add(CustomCalculation.GetHex("B")[0] + CustomCalculation.GetHex("M")[0]);//ok
-
-                CustomCalculation.Length = 8;
-                int paddingCount = width * 3 % 4;
-                string temp = CustomCalculation.GetHex(54 + width * height * 3 + height * paddingCount);
-                data.Add(CustomString.ReverseGroup(temp, 2));
-                //ok
-                CustomCalculation.Length = 4;
-                string[] tempArr = CustomCalculation.GetHex(new int[] { 0, 0 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-                //ok
-                CustomCalculation.Length = 8;
-                tempArr = CustomCalculation.GetHex(new int[] { 54, 40, width, height });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-
-                CustomCalculation.Length = 4;
-                tempArr = CustomCalculation.GetHex(new int[] { 1, 24 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-
-                CustomCalculation.Length = 8;
-                tempArr = CustomCalculation.GetHex(new int[] { 0, 16, 2835, 2835, 0, 0 });
-                foreach (string s in tempArr)
-                {
-                    data.Add(CustomString.ReverseGroup(s, 2));
-                }
-
-                return data.ToArray();
-            }
-            #endregion
             #region byte[]
             public static byte[] GetTransitionData(Color[] a, Color[] b, int step = 5, int scaleX = 10, int scaleY = 10)
             {
@@ -517,24 +393,16 @@ namespace TahsinsLibrary
             }
             public static byte[] GetArray(Color[,] colors)
             {
-                List<string> data = new List<string>();
-                foreach (string s in CreateBMPHeader(colors.GetLength(0), colors.GetLength(1)))
+                List<byte> data = new();
+                foreach (byte b in GetBMPHeader(colors))
                 {
-                    data.Add(s);
+                    data.Add(b);
                 }
-                Color[] temp = new Color[colors.GetLength(0) * colors.GetLength(1)];
-                for (int i = 0; i < colors.GetLength(0); i++)
+                foreach (byte b in GetColorMatrix(colors))
                 {
-                    for (int j = 0; j < colors.GetLength(1); j++)
-                    {
-                        temp[i * colors.GetLength(0) + j] = colors[i, j];
-                    }
+                    data.Add(b);
                 }
-                foreach (string s in GenerateColorMatrix(colors.GetLength(0), temp))
-                {
-                    data.Add(s);
-                }
-                return CustomCalculation.ToByteArray(data.ToArray());
+                return data.ToArray();
             }
             public static byte[] GetColorMatrix(Color[,] resource)
             {
@@ -683,7 +551,6 @@ namespace TahsinsLibrary
                 #endregion
                 return data.ToArray();
             }
-
             #endregion
         }
         public static class PNG
@@ -1020,6 +887,18 @@ namespace TahsinsLibrary
                 }
             }
             return result;
+        }
+        public static Color[,] ToGreyScale(byte[,] reources)
+        {
+            Color[,] colorData = new Color[reources.GetLength(0), reources.GetLength(1)];
+            for (int i = 0; i < colorData.GetLength(0); i++)
+            {
+                for (int j = 0; j < colorData.GetLength(1); j++)
+                {
+                    colorData[i, j] = new Color(reources[i, j], reources[i, j], reources[i, j], (byte)255);
+                }
+            }
+            return colorData;
         }
     }
 }
