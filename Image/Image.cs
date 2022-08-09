@@ -498,7 +498,6 @@ namespace TahsinsLibrary
                 data.Add(0);
 
                 value = (resource.GetLength(0) + paddingCount) * 3 * resource.GetLength(1);
-                Console.WriteLine(paddingCount);
                 s = value.ToString("X8");
                 temp = new byte[s.Length / 2];
                 for (int i = 0; i < temp.Length; i++)

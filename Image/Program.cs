@@ -15,7 +15,7 @@ namespace Program
     {
         static void Main(string[] args)
         {
-            
+            foreach (byte b in Image.BMP.GetBMPHeader(new Color[4, 4])) Console.Write(b + ",");
         }
     }
 }

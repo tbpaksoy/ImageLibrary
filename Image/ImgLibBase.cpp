@@ -10,7 +10,13 @@ namespace Tahsin
     const string accepted = "0123456789ABCDEFabcdef";
     int length = 8;
     bool forceUpper = true;
-
+    float GoToValue(float a, float b)
+    {
+        if (b < a)
+            return -abs(b - a);
+        else
+            return abs(a - b);
+    }
     bool IsAcceptable(char c)
     {
         for (int i = 0; i < accepted.size(); i++)
@@ -255,11 +261,11 @@ namespace Tahsin
     template <typename T>
     bool IsHomogenious(vector<vector<T>> source)
     {
-        if (source.size() != NULL)
+        if (source.size() != 0)
         {
             for (int i = 1; i < source.size(); i++)
             {
-                if (source[i - 1].size() == NULL || source[i].size() == NULL || source[i - 1].size() != source[i].size())
+                if (source[i - 1].size() == 0 || source[i].size() == 0 || source[i - 1].size() != source[i].size())
                     return false;
             }
         }
@@ -314,8 +320,8 @@ namespace Tahsin
                 char a = from.a + (char)(GoToValue(from.a, to.a) * j / step);
                 transition.push_back(Color(r, g, b, a));
             }
-            return result;
         }
+        return result;
     }
     vector<vector<Color>> CreateColorVariants(Color color, int width = 5, int height = 5)
     {
@@ -355,12 +361,5 @@ namespace Tahsin
         }
         return result;
     }
-    
-    float GoToValue(float a, float b)
-    {
-        if (b < a)
-            return -abs(b - a);
-        else
-            abs(a - b);
-    }
+
 }
