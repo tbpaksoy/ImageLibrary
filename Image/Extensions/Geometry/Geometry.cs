@@ -2,6 +2,44 @@ using System;
 using System.Collections.Generic;
 namespace TahsinsLibrary.Geometry
 {
+    public interface IOffset
+    {
+        public Vector2D offset { get; set; }
+        public Vector2D[] ApplyOffset();
+        public Vector2D[] ApplyOffset(Vector2D offset);
+        public Vector2D[] ApplyOffset(Vector2D[] points);
+        public static Vector2D[] ApplyOffset(Vector2D[] vertices, Vector2D offset)
+        {
+            Vector2D[] result = new Vector2D[vertices.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = vertices[i] + offset;
+            }
+            return result;
+        }
+    }
+    public interface IRotate
+    {
+        public float rotation { get; set; }
+        public Vector2D[] Rotate();
+        public Vector2D[] Rotate(float rotation);
+        public Vector2D[] Rotate(Vector2D[] vertices);
+        public static Vector2D[] Rotate(Vector2D[] vertices, float rotation)
+        {
+            Vector2D[] result = new Vector2D[vertices.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new Vector2D(vertices[i].x * MathF.Cos(rotation) - vertices[i].y * MathF.Sin(rotation), vertices[i].x * MathF.Sin(rotation) + vertices[i].y * MathF.Cos(rotation));
+            }
+            return result;
+        }
+    }
+    public interface ITransform : IRotate, IOffset
+    {
+        public Vector2D[] points { get; }
+        public Vector2D[] ApplyTransform();
+        public Vector2D[] GetTransformedPoints();
+    }
     public struct Vector2D
     {
         public enum Orientation { CounterClockWise, CoLinear, ClockWise }
@@ -98,12 +136,58 @@ namespace TahsinsLibrary.Geometry
 
             return detereminant == 0 ? new(float.NaN, float.NaN) : new Vector2D(b2 * c1 - b1 * c2, a1 * c2 - a2 * c1) / detereminant;
         }
+        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs(x - point.x * y - point.y));
+
     }
-    public abstract class Shape2D
+    public abstract class Shape2D : ITransform
     {
         public abstract float area { get; }
         public abstract Vector2D[] points { get; }
         public abstract Vector2D centroid { get; }
+        public Vector2D offset { get; set; }
+        public float rotation { get; set; }
+
+        public Vector2D[] ApplyOffset()
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++) result[i] = points[i] + offset;
+            return result;
+        }
+
+        public Vector2D[] ApplyOffset(Vector2D offset)
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++) result[i] = points[i] + offset;
+            return result;
+        }
+
+        public Vector2D[] ApplyOffset(Vector2D[] points) => IOffset.ApplyOffset(points, offset);
+
+        public Vector2D[] ApplyTransform() => ApplyOffset(Rotate());
+
+        public Vector2D[] GetTransformedPoints() => ApplyOffset(Rotate());
+
+        public Vector2D[] Rotate()
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new Vector2D(points[i].x * MathF.Cos(rotation) - points[i].y * MathF.Sin(rotation), points[i].x * MathF.Sin(rotation) + points[i].y * MathF.Cos(rotation));
+            }
+            return result;
+        }
+
+        public Vector2D[] Rotate(float rotation)
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new Vector2D(points[i].x * MathF.Cos(rotation) - points[i].y * MathF.Sin(rotation), points[i].x * MathF.Sin(rotation) + points[i].y * MathF.Cos(rotation));
+            }
+            return result;
+        }
+
+        public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
     }
     public sealed class Triangle : Shape2D
     {
@@ -307,20 +391,79 @@ namespace TahsinsLibrary.Geometry
             vertices = temp.ToArray();
             Console.WriteLine("Solving Process Ended");
         }
+        public bool IsPointInside(Vector2D point)
+        {
+            foreach (Triangle triangle in TriangulatePolygon())
+            {
+                if (triangle.IsPointInside(point)) return true;
+            }
+            return false;
+        }
     }
-    public sealed class Line2D
+    public sealed class Line2D : ITransform
     {
         public Vector2D from;
         public Vector2D to;
+        public Vector2D centroid => (from + to) / 2f;
+
+        public float rotation { get; set; }
+        public Vector2D offset { get; set; }
+
+        public Vector2D[] points => new Vector2D[] { from, to };
+
+        public Vector2D[] ApplyOffset()
+        {
+            return new Vector2D[] { from + offset, to + offset };
+        }
+
+        public Vector2D[] ApplyOffset(Vector2D offset)
+        {
+            return new Vector2D[] { from + offset, to + offset };
+        }
+
+        public Vector2D[] ApplyOffset(Vector2D[] points) => IOffset.ApplyOffset(points, offset);
+
+        public Vector2D[] ApplyTransform() => ApplyOffset(Rotate());
+
         public Vector2D[] GetPoints()
         {
-            int dx = (int)(to.x - from.x);
-            int dy = (int)(to.y - from.y);
+            List<Vector2D> result = new();
+            int dx = (int)MathF.Abs(to.x - from.x);
+            int sx = from.x < to.x ? 1 : -1;
+            int dy = -(int)MathF.Abs(to.y - from.y);
+            int sy = from.y < to.y ? 1 : -1;
+            int error = dx + dy;
+            int x = (int)from.x, y = (int)from.y;
+            while (true)
+            {
+                result.Add(new Vector2D(x, y));
+                if (x == (int)to.x && y == (int)to.y) break;
+                int e = 2 * error;
+                if (e >= dy)
+                {
+                    if (x == (int)to.x) break;
+                    error += dy;
+                    x += sx;
+                }
+                if (e <= dx)
+                {
+                    if (y == (int)to.y) break;
+                    error += dx;
+                    y += sy;
+                }
+            }
+            return result.ToArray();
+        }
+        public Vector2D[] GetTransformedPoints()
+        {
+            Vector2D[] points = ApplyTransform();
+            int dx = (int)(points[1].x - points[0].x);
+            int dy = (int)(points[1].y - points[0].y);
             int d = 2 * dy - dx;
-            int y = 0;
+            int y = (int)to.y;
             List<Vector2D> result = new List<Vector2D>();
 
-            for (int x = (int)from.x; x < (int)to.x; x++)
+            for (int x = (int)points[0].x; x < (int)points[1].x; x++)
             {
                 result.Add(new(x, y));
                 if (d > 0)
@@ -333,5 +476,26 @@ namespace TahsinsLibrary.Geometry
 
             return result.ToArray();
         }
+
+        public Vector2D[] Rotate()
+        {
+            return new Vector2D[]
+            {
+                new(from.x * MathF.Cos(rotation) - from.y * MathF.Sin(rotation), from.x * MathF.Sin(rotation) + from.y * MathF.Cos(rotation)),
+                new(to.x * MathF.Cos(rotation) - to.y * MathF.Sin(rotation), to.x * MathF.Sin(rotation) + to.y * MathF.Cos(rotation))
+            };
+        }
+
+        public Vector2D[] Rotate(float rotation)
+        {
+            return new Vector2D[]
+            {
+                new(from.x * MathF.Cos(rotation) - from.y * MathF.Sin(rotation),from.x * MathF.Sin(rotation) + from.y * MathF.Cos(rotation)),
+                new(to.x * MathF.Cos(rotation) - to.y * MathF.Sin(rotation),to.x * MathF.Sin(rotation) + to.y * MathF.Cos(rotation))
+            };
+        }
+
+        public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
+
     }
 }
