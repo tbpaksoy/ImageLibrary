@@ -5,8 +5,8 @@ using TahsinsLibrary.String;
 using System.IO;
 using TahsinsLibrary.Analyze;
 using System.Globalization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 namespace TahsinsLibrary
 {
     public interface IColorTurnable
@@ -21,6 +21,7 @@ namespace TahsinsLibrary
     }
     public struct Color
     {
+        [JsonInclude]
         public byte r, g, b, a;
         public static Color random
         {
@@ -30,6 +31,7 @@ namespace TahsinsLibrary
                 return new(r.Next() % 256, r.Next() % 256, r.Next() % 256);
             }
         }
+        [JsonIgnore]
         public string hex
         {
             get
@@ -47,6 +49,7 @@ namespace TahsinsLibrary
                 }
             }
         }
+        [JsonIgnore]
         public Color negative
         {
             get
@@ -54,6 +57,7 @@ namespace TahsinsLibrary
                 return new Color(255 - r, 255 - g, 255 - b, a);
             }
         }
+        [JsonIgnore]
         public Color greyScaleAvarage
         {
             get
@@ -183,15 +187,25 @@ namespace TahsinsLibrary
             {
                 if (file.EndsWith("json"))
                 {
-                    JObject jo = JObject.Parse(File.ReadAllText(file));
-                    if (jo.ContainsKey(name))
-                    {
-
-                        return jo[name].ToObject<Color>();
-                    }
+                    Dictionary<string, Color> dic = JsonSerializer.Deserialize<Dictionary<string, Color>>(File.OpenRead(file));
+                    if (dic.ContainsKey(name)) return dic[name];
                 }
             }
             return new Color();
+        }
+        public static void SaveColorToLibrary(string fileName, string colorName, Color color)
+        {
+            string s = @$"{Directory.GetCurrentDirectory()}\Colors\{fileName}.json";
+            bool isNew = !File.Exists(s);
+            if (isNew)
+            {
+                File.Create(s).Close();
+                File.WriteAllText(s, "{\n}");
+            }
+            string content = File.ReadAllText(s);
+            content = content.Substring(1, content.Length - 2);
+            string newContent = "\u0022" + colorName + "\u0022" + ":" + JsonSerializer.Serialize(color) + "\n";
+            File.WriteAllText(s, "{" + content + (string.IsNullOrWhiteSpace(content) && isNew ? null : ",") + "\n" + newContent + "}");
         }
         public static Color FromHex(string hex)
         {

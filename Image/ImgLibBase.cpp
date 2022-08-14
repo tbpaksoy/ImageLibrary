@@ -361,4 +361,30 @@ namespace Tahsin
         }
         return result;
     }
+    vector<vector<Color>> CreateMidColorTable(vector<Color> a, vector<Color> b)
+    {
+        vector<vector<Color>> result;
+        for (int i = 0; i < a.size(); i++)
+        {
+            vector<Color> temp;
+            for (int j = 0; j < b.size(); j++)
+            {
+                if (i == 0)
+                {
+                    temp.push_back(a[i]);
+                }
+                else if (j == 0)
+                {
+                    temp.push_back(b[j]);
+                }
+                else
+                {
+                    temp.push_back(a[i].GetMidColor(b[j]));
+                }
+            }
+            result.push_back(temp);
+        }
+        return result;
+    }
+    
 }

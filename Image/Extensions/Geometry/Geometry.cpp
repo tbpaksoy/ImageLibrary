@@ -2,7 +2,6 @@
 using namespace std;
 namespace Tahsin
 {
-
     struct Vector2D
     {
     private:
@@ -82,6 +81,48 @@ namespace Tahsin
     const Vector2D Vector2D::down = Vector2D(0, -1);
     const Vector2D Vector2D::left = Vector2D(1, 0);
     const Vector2D Vector2D::right = Vector2D(-1, 0);
+    class IOffset
+    {
+    public:
+        Vector2D offset;
+        virtual vector<Vector2D> ApplyOffset() = 0;
+        virtual vector<Vector2D> ApplyOffset(Vector2D offset) = 0;
+        virtual vector<Vector2D> ApplyOffset(vector<Vector2D> points) = 0;
+        static vector<Vector2D> ApplyOffset(vector<Vector2D> vertices, Vector2D offset)
+        {
+            vector<Vector2D> result;
+            for (int i = 0; i < vertices.size(); i++)
+            {
+                result.push_back(result[i] + offset);
+            }
+            return result;
+        }
+    };
+    class IRotate
+    {
+    public:
+        float rotation;
+        virtual vector<Vector2D> Rotate() = 0;
+        virtual vector<Vector2D> Rotate(float rotation) = 0;
+        virtual vector<Vector2D> Rotate(vector<Vector2D> vertices) = 0;
+        static vector<Vector2D> Rotate(vector<Vector2D> vertices, float rotation)
+        {
+            vector<Vector2D> result;
+            for (Vector2D v : vertices)
+            {
+                Vector2D calculated = Vector2D(v.GetX() * cosf(rotation) - v.GetY() * sinf(rotation),
+                                               v.GetX() * sinf(rotation) + v.GetY() * cosf(rotation));
+            }
+            return result;
+        }
+    };
+    class ITransform : public IRotate, public IOffset
+    {
+    public:
+        virtual vector<Vector2D> GetPoints() = 0;
+        virtual vector<Vector2D> ApplyTransform() = 0;
+        virtual vector<Vector2D> GetTransformedPoints() = 0;
+    };
     class Shape2D
     {
     public:
