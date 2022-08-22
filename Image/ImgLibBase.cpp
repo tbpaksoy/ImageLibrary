@@ -3,6 +3,7 @@
 #include <array>
 #include <sstream>
 #include <vector>
+#include <limits>
 using namespace std;
 
 namespace Tahsin
@@ -386,5 +387,52 @@ namespace Tahsin
         }
         return result;
     }
-    
+    int Max(vector<int> resource)
+    {
+        int result = numeric_limits<int>::min();
+        for (int i : resource)
+        {
+            if (i > result)
+            {
+                result = i;
+            }
+        }
+        return result;
+    }
+    float Max(vector<float> resource)
+    {
+        float result = numeric_limits<float>::min();
+        for (float f : resource)
+        {
+            if (f > result)
+            {
+                result = f;
+            }
+        }
+        return result;
+    }
+    int Min(vector<int> resource)
+    {
+        int result = numeric_limits<int>::max();
+        for (int i : resource)
+        {
+            if (i < result)
+            {
+                result = i;
+            }
+        }
+        return result;
+    }
+    float Min(vector<float> resource)
+    {
+        float result = numeric_limits<float>::max();
+        for (float f : resource)
+        {
+            if (f < result)
+            {
+                result = f;
+            }
+        }
+        return result;
+    }
 }

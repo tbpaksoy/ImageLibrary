@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TahsinsLibrary.Analyze;
 namespace TahsinsLibrary.Geometry
 {
     public interface IOffset
@@ -49,6 +50,11 @@ namespace TahsinsLibrary.Geometry
         public static readonly Vector2D right = new Vector2D(1f, 0f);
         public float magnitude => MathF.Sqrt(x * x + y * y);
         public Vector2D normal => this / MathF.Max(x, y);
+        public static Vector2D GetRandom(int minX, int maxX, int minY, int maxY)
+        {
+            Random random = new Random();
+            return new Vector2D(random.Next(minX, maxX) + random.NextSingle(), random.Next(minY, maxY) + random.NextSingle());
+        }
         public float x
         {
             get; private set;
@@ -57,6 +63,8 @@ namespace TahsinsLibrary.Geometry
         {
             get; private set;
         }
+        public int pointX => (int)x;
+        public int pointY => (int)y;
         public Vector2D(float x, float y)
         {
             this.x = x;
@@ -188,6 +196,10 @@ namespace TahsinsLibrary.Geometry
         }
 
         public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
+        public abstract Line2D[] ToLines();
+        public abstract bool InSegment(Vector2D point);
+        public abstract (float, float, float, float) GetSegment();
+        public abstract bool IsPointInside(Vector2D point);
     }
     public sealed class Triangle : Shape2D
     {
@@ -226,9 +238,27 @@ namespace TahsinsLibrary.Geometry
             }
             return result.ToArray();
         }
-        public bool IsPointInside(Vector2D point)
+        //xMin,xMax,yMin,yMax
+        public override (float, float, float, float) GetSegment()
         {
 
+            float xMin = Compare.Min(new float[] { pointA.x, pointB.x, pointC.x });
+            float xMax = Compare.Max(new float[] { pointA.x, pointB.x, pointC.x });
+            float yMin = Compare.Min(new float[] { pointA.y, pointB.y, pointC.y });
+            float yMax = Compare.Max(new float[] { pointA.y, pointB.y, pointC.y });
+            return (xMin, xMax, yMin, yMax);
+        }
+
+        public override bool InSegment(Vector2D point)
+        {
+            (float, float, float, float) segment = GetSegment();
+            float x = point.x, y = point.y;
+            return !(x < segment.Item1 || x > segment.Item2 || y < segment.Item3 || y > segment.Item4);
+        }
+
+        public override bool IsPointInside(Vector2D point)
+        {
+            if (!InSegment(point)) return false;
             Vector2D a = pointA;
             Vector2D b = pointB;
             Vector2D c = pointC;
@@ -238,6 +268,16 @@ namespace TahsinsLibrary.Geometry
             float w2 = p.y - a.y - w1 * (b.y - a.y);
             w2 /= c.y - a.y;
             return w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
+        }
+
+        public override Line2D[] ToLines()
+        {
+            return new Line2D[]
+            {
+                new(){from = pointA, to = pointB},
+                new(){from = pointB, to = pointC},
+                new(){from = pointC, to = pointA}
+            };
         }
     }
     public class FreePolygon2D : Shape2D
@@ -391,13 +431,52 @@ namespace TahsinsLibrary.Geometry
             vertices = temp.ToArray();
             Console.WriteLine("Solving Process Ended");
         }
-        public bool IsPointInside(Vector2D point)
+        public override bool IsPointInside(Vector2D point)
         {
+            if (!InSegment(point)) return false;
             foreach (Triangle triangle in TriangulatePolygon())
             {
                 if (triangle.IsPointInside(point)) return true;
             }
             return false;
+        }
+
+        public override Line2D[] ToLines()
+        {
+            Line2D[] lines = new Line2D[vertices.Length];
+            lines[0] = new() { from = vertices[0], to = vertices[1] };
+            for (int i = 1; i < vertices.Length - 1; i++)
+            {
+                lines[i] = new() { from = vertices[i], to = vertices[i + 1] };
+            }
+            lines[lines.Length - 1] = new() { from = vertices[vertices.Length - 1], to = vertices[0] };
+            return lines;
+        }
+
+        public override bool InSegment(Vector2D point)
+        {
+            (float, float, float, float) segment = GetSegment();
+            float x = point.x, y = point.y;
+            return !(x < segment.Item1 || x > segment.Item2 || y < segment.Item3 || y > segment.Item4);
+        }
+
+        public override (float, float, float, float) GetSegment()
+        {
+            List<float> temp = new List<float>();
+            foreach (Vector2D vector in points)
+            {
+                temp.Add(vector.x);
+            }
+            float xMin = Compare.Min(temp.ToArray());
+            float xMax = Compare.Max(temp.ToArray());
+            temp.Clear();
+            foreach (Vector2D vector in points)
+            {
+                temp.Add(vector.y);
+            }
+            float yMin = Compare.Min(temp.ToArray());
+            float yMax = Compare.Max(temp.ToArray());
+            return (xMin, xMax, yMin, yMax);
         }
     }
     public sealed class Line2D : ITransform
@@ -497,5 +576,49 @@ namespace TahsinsLibrary.Geometry
 
         public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
 
+    }
+    public static class GeometryUtility
+    {
+        public static void JustCut(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
+        {
+            List<Vector2D> intersectinPoints = new List<Vector2D>();
+            Vector2D[] polygonlPoints = useTranform ? polygon.GetTransformedPoints() : polygon.points;
+            Vector2D[] shapePoints = useTranform ? shape.GetTransformedPoints() : polygon.points;
+            List<Vector2D> appliedPoints = new List<Vector2D>();
+            foreach (Vector2D point in polygonlPoints)
+            {
+                if (!shape.IsPointInside(point)) appliedPoints.Add(point);
+            }
+            foreach (Vector2D point in shapePoints)
+            {
+                if (polygon.IsPointInside(point)) appliedPoints.Add(point);
+            }
+
+        }
+        public static FreePolygon2D CutAndSnatch(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
+        {
+            throw new Exception();
+        }
+        public static FreePolygon2D CutSnatchAndUniteWithShape(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
+        {
+            throw new Exception();
+        }
+        public static void Add(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
+        {
+
+        }
+        public static FreePolygon2D GetCircle(float radius = 1f, int resolution = 16)
+        {
+            resolution = (int)MathF.Max(3, resolution);
+            Vector2D[] points = new Vector2D[resolution];
+            for (int i = 0; i < resolution; i++)
+            {
+                float angle = 2f * MathF.PI / (float)resolution * (float)(i);
+                points[i] = new Vector2D(MathF.Cos(angle), MathF.Sin(angle))
+                  * radius;
+            }
+            return new FreePolygon2D() { vertices = points };
+        }
+        public static void Intersect(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false) { }
     }
 }

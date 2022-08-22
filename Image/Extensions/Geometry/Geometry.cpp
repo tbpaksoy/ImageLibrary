@@ -1,7 +1,12 @@
 #include <vector>
+#include <math.h>
+#include <tuple>
+#include <limits>
+#include <algorithm>
 using namespace std;
 namespace Tahsin
 {
+    const float pi = 22.0 / 7.0;
     struct Vector2D
     {
     private:
@@ -76,6 +81,14 @@ namespace Tahsin
                 return true;
             return false;
         }
+        int PointX()
+        {
+            return (int)x;
+        }
+        int PointY()
+        {
+            return (int)y;
+        }
     };
     const Vector2D Vector2D::up = Vector2D(0, 1);
     const Vector2D Vector2D::down = Vector2D(0, -1);
@@ -123,14 +136,22 @@ namespace Tahsin
         virtual vector<Vector2D> ApplyTransform() = 0;
         virtual vector<Vector2D> GetTransformedPoints() = 0;
     };
-    class Shape2D
+    class Shape2D : public ITransform
     {
     public:
         virtual float GetArea() = 0;
         virtual vector<Vector2D> GetPoints() = 0;
         virtual Vector2D GetCentroid() = 0;
+        virtual tuple<float, float, float, float> GetSegment() = 0;
+        virtual bool IsPointInside(Vector2D point) = 0;
+        virtual bool InSegment(Vector2D point)
+        {
+            tuple<float, float, float, float> segment = GetSegment();
+            float x = point.GetX(), y = point.GetY();
+            return !(x < get<0>(segment) || x > get<1>(segment) || y < get<2>(segment) || y > get<3>(segment));
+        }
     };
-    class Line2D
+    class Line2D : public ITransform
     {
     public:
         Vector2D from, to;
@@ -145,21 +166,63 @@ namespace Tahsin
         ~Line2D() {}
         vector<Vector2D> GetPoints()
         {
-            int dx = (int)(to.GetX() - from.GetX());
-            int dy = (int)(to.GetY() - from.GetY());
-            int d = 2 * dy - dx;
-            int y = 0;
             vector<Vector2D> result;
-            for (int x = (int)from.GetX(); x < (int)to.GetX(); x++)
+            int dx = (int)abs(to.GetX() - from.GetX());
+            int sx = from.GetX() < to.GetY() ? 1 : -1;
+            int dy = -(int)abs(to.GetY() - from.GetY());
+            int sy = from.GetY() < to.GetY() ? 1 : -1;
+            int error = dx + dy;
+            int x = (int)from.GetX(), y = (int)from.GetY();
+            while (true)
             {
-                result.push_back(Vector2D((int)x, (int)y));
-                if (d > 0)
+                result.push_back(Vector2D(x, y));
+                if (x == (int)to.GetX() && y == (int)to.GetY())
+                    break;
+                int e = 2 * error;
+                if (e >= dy)
                 {
-                    y++;
-                    d -= 2 * dx;
+                    if (x == (int)to.GetX())
+                        break;
+                    error += dy;
+                    x += sx;
                 }
-                d += 2 * dy;
+                if (e <= dx)
+                {
+                    if (y == (int)to.GetY())
+                        break;
+                    error += dx;
+                    y += sy;
+                }
             }
+
+            return result;
+        }
+        Vector2D GetCentroid()
+        {
+            return (from + to) / 2;
+        }
+        vector<Vector2D> ApplyOffset() override
+        {
+            vector<Vector2D> result;
+            result.push_back(from + offset);
+            result.push_back(to + offset);
+            return result;
+        }
+        vector<Vector2D> ApplyOffset(Vector2D offset) override
+        {
+            vector<Vector2D> result;
+            result.push_back(from + offset);
+            result.push_back(to + offset);
+            return result;
+        }
+        vector<Vector2D> ApplyOffset(vector<Vector2D> points) override
+        {
+            vector<Vector2D> result;
+            for (Vector2D v : points)
+            {
+                result.push_back(v + offset);
+            }
+            return result;
         }
     };
     class Triangle : public Shape2D
@@ -208,6 +271,8 @@ namespace Tahsin
         }
         bool IsPointInside(Vector2D point)
         {
+            if (!InSegment(point))
+                return false;
             Vector2D a = pointA;
             Vector2D b = pointB;
             Vector2D c = pointC;
@@ -218,6 +283,209 @@ namespace Tahsin
             w2 /= c.GetY() - a.GetY();
             return w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
         }
+        vector<Vector2D> GetPoints() override
+        {
+            vector<Vector2D> result;
+            result.push_back(pointA);
+            result.push_back(pointB);
+            result.push_back(pointC);
+            return result;
+        }
+        vector<Vector2D> ApplyTransform() override
+        {
+        }
+        vector<Vector2D> GetTransformedPoints() override
+        {
+        }
+        vector<Vector2D> Rotate() override
+        {
+            vector<Vector2D> result;
+            Vector2D a = pointA;
+            Vector2D b = pointB;
+            Vector2D c = pointC;
+            result.push_back(Vector2D(a.GetX() * cosf(rotation) - a.GetY() * sinf(rotation), a.GetX() * sinf(rotation) + a.GetY() * cosf(rotation)));
+            result.push_back(Vector2D(b.GetX() * cosf(rotation) - b.GetY() * sinf(rotation), b.GetX() * sinf(rotation) + b.GetY() * cosf(rotation)));
+            result.push_back(Vector2D(c.GetX() * cosf(rotation) - c.GetY() * sinf(rotation), c.GetX() * sinf(rotation) + c.GetY() * cosf(rotation)));
+            return result;
+        }
+        vector<Vector2D> Rotate(float rotation) override
+        {
+            vector<Vector2D> result;
+            Vector2D a = pointA;
+            Vector2D b = pointB;
+            Vector2D c = pointC;
+            result.push_back(Vector2D(a.GetX() * cosf(rotation) - a.GetY() * sinf(rotation), a.GetX() * sinf(rotation) + a.GetY() * cosf(rotation)));
+            result.push_back(Vector2D(b.GetX() * cosf(rotation) - b.GetY() * sinf(rotation), b.GetX() * sinf(rotation) + b.GetY() * cosf(rotation)));
+            result.push_back(Vector2D(c.GetX() * cosf(rotation) - c.GetY() * sinf(rotation), c.GetX() * sinf(rotation) + c.GetY() * cosf(rotation)));
+            return result;
+        }
+        vector<Vector2D> Rotate(vector<Vector2D> vertices) override {}
+        vector<Vector2D> ApplyOffset() override
+        {
+            vector<Vector2D> result;
+            result.push_back(pointA + offset);
+            result.push_back(pointB + offset);
+            result.push_back(pointC + offset);
+            return result;
+        }
+        vector<Vector2D> ApplyOffset(Vector2D offset)
+        {
+            vector<Vector2D> result;
+            result.push_back(pointA + offset);
+            result.push_back(pointB + offset);
+            result.push_back(pointC + offset);
+            return result;
+        }
+        vector<Vector2D> ApplyOffset(vector<Vector2D> offsets) override {}
+        tuple<float, float, float, float> GetSegment() override
+        {
+            vector<float> x;
+            x.push_back(pointA.GetX());
+            x.push_back(pointB.GetX());
+            x.push_back(pointC.GetX());
+            vector<float> y;
+            y.push_back(pointA.GetY());
+            y.push_back(pointB.GetY());
+            y.push_back(pointC.GetY());
+            tuple<float, float, float, float> segment = make_tuple(*min_element(x.begin(), x.end()), *max_element(x.begin(), x.end()),
+                                                                   *min_element(y.begin(), y.end()), *min_element(y.begin(), y.end()));
+            return segment;
+        }
     };
-
+    class FreePolygon2D : public Shape2D
+    {
+    public:
+        vector<Vector2D> vertices;
+        vector<Triangle *> Triangulate()
+        {
+            vector<int> indices;
+            vector<Triangle *> triangles;
+            for (int i = 0; i < vertices.size(); i++)
+            {
+                indices.push_back(i);
+            }
+            while (indices.size() > 2)
+            {
+                for (int i = 0; i < indices.size() - 2; i++)
+                {
+                    Vector2D a = vertices[indices[i]];
+                    Vector2D b = vertices[indices[i + 1]];
+                    Vector2D c = vertices[indices[i + 2]];
+                    Triangle *triangle = new Triangle();
+                    bool test = false;
+                    for (int j = 0; j < vertices.size(); j++)
+                    {
+                        if ((j < i || j > i + 2) && triangle->IsPointInside(vertices[j]))
+                        {
+                            test = true;
+                            break;
+                        }
+                    }
+                    if (!test)
+                    {
+                        triangles.push_back(triangle);
+                        indices.erase(indices.begin() + i + 1);
+                    }
+                }
+            }
+            return triangles;
+        }
+        float GetArea() override
+        {
+            float area = 0.0;
+            vector<Triangle *> triangles = Triangulate();
+            for (Triangle *trianlge : triangles)
+            {
+                area += trianlge->GetArea();
+            }
+            return area;
+        }
+        bool IsPointInside(Vector2D point) override
+        {
+            if (!InSegment(point))
+                return false;
+            vector<Triangle *> triangles = Triangulate();
+            for (Triangle *triangle : triangles)
+            {
+                if (triangle->IsPointInside(point))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        vector<Vector2D> GetPoints() override
+        {
+            return vertices;
+        }
+        Vector2D GetCentroid() override
+        {
+            Vector2D sum = Vector2D();
+            for (Vector2D v : vertices)
+            {
+                sum = sum + v;
+            }
+            return sum / (float)vertices.size();
+        }
+        tuple<float, float, float, float> GetSegment() override
+        {
+            vector<float> x;
+            vector<float> y;
+            for (Vector2D v : vertices)
+            {
+                x.push_back(v.GetX());
+                y.push_back(v.GetY());
+            }
+            tuple<float, float, float, float> segment = make_tuple(*min_element(x.begin(), x.end()), *max_element(x.begin(), x.end()),
+                                                                   *min_element(y.begin(), y.end()), *max_element(y.begin(), y.end()));
+            return segment;
+        }
+        vector<Vector2D> ApplyOffset() override
+        {
+            vector<Vector2D> result;
+            for (Vector2D v : vertices)
+            {
+                result.push_back(v + offset);
+            }
+            return result;
+        }
+        vector<Vector2D> ApplyOffset(Vector2D offset) override
+        {
+            vector<Vector2D> result;
+            for (Vector2D v : vertices)
+            {
+                result.push_back(v + offset);
+            }
+            return result;
+        }
+        vector<Vector2D> ApplyOffset(vector<Vector2D> resource) override
+        {
+            vector<Vector2D> result;
+            for (Vector2D v : resource)
+            {
+                result.push_back(v + offset);
+            }
+            return result;
+        }
+        vector<Vector2D> ApplyTransform() override{}
+        vector<Vector2D> GetTransformedPoints() override{}
+        vector<Vector2D> Rotate() override
+        {
+            
+        }
+        vector<Vector2D> Rotate(float rotation) override{}
+        vector<Vector2D> Rotate(vector<Vector2D> vertices) override{}
+    };
+    FreePolygon2D *GetCircle(float radius = 1.0, int resolution = 16)
+    {
+        vector<Vector2D> vertices;
+        for (int i = 0; i < resolution; i++)
+        {
+            float angle = 2 * pi / (float)resolution * (float)i;
+            vertices.push_back(Vector2D(cosf(angle), sinf(angle)) * radius);
+        }
+        FreePolygon2D *circle = new FreePolygon2D();
+        circle->vertices = vertices;
+        return circle;
+    }
 }

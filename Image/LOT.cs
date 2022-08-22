@@ -363,7 +363,7 @@ namespace TahsinsLibrary.Analyze
             }
             return list;
         }
-        public static List<(int, int)> CheckAdcentivty<T>(Func<T, bool> condition, int x, int y, T[,] source, int limit = int.MaxValue)
+        public static List<(int, int)> CheckAdjenctivty<T>(Func<T, bool> condition, int x, int y, T[,] source, int limit = int.MaxValue)
         {
             throw new Exception();
         }
@@ -467,6 +467,33 @@ namespace TahsinsLibrary.Analyze
             foreach (int i in numbers)
             {
                 if (i > result) result = i;
+            }
+            return result;
+        }
+        public static int Min(params int[] numbers)
+        {
+            int result = int.MaxValue;
+            foreach (int i in numbers)
+            {
+                if (i < result) result = i;
+            }
+            return result;
+        }
+        public static float Max(params float[] numbers)
+        {
+            int result = int.MinValue;
+            foreach (int i in numbers)
+            {
+                if (i > result) result = i;
+            }
+            return result;
+        }
+        public static float Min(params float[] numbers)
+        {
+            int result = int.MaxValue;
+            foreach (int i in numbers)
+            {
+                if (i < result) result = i;
             }
             return result;
         }

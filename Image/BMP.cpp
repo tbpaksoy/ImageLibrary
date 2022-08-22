@@ -5,6 +5,10 @@
 #include "ImgLibBase.cpp"
 #include <filesystem>
 #include <fstream>
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+#include "imgui.h"
+#include <GLFW/glfw3.h>
 
 using namespace std;
 using namespace Tahsin;
@@ -185,7 +189,4 @@ vector<char> GetColorData(vector<vector<Color>> resource)
     }
 
     return data;
-}
-int main()
-{
 }
