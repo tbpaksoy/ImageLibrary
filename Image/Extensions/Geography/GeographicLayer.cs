@@ -4,12 +4,12 @@ using System;
 using System.Collections.Generic;
 namespace TahsinsLibrary.Geography.Layers
 {
-    public class PoliticalLayer : Layer<Biome>, IColorTurnable
+    public class BiomeLayer : Layer<Biome>, IColorTurnable
     {
         public Biome defaultBiome;
         public Biome[] biomeVarierity;
         public int iterationCount, min, max;
-        public PoliticalLayer(int width, int height, int permissionCount) : base(width, height, permissionCount)
+        public BiomeLayer(int width, int height, int permissionCount) : base(width, height, permissionCount)
         {
             data = new Biome[width, height];
             permission = new int[width, height];
@@ -21,7 +21,6 @@ namespace TahsinsLibrary.Geography.Layers
                 }
             }
         }
-
         public override void GenerateData()
         {
             Random random = new Random();
@@ -30,7 +29,6 @@ namespace TahsinsLibrary.Geography.Layers
                 
             }
         }
-
         public override Biome[,] GetData()
         {
             throw new System.NotImplementedException();
