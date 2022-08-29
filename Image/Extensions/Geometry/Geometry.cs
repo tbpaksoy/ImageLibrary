@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using TahsinsLibrary.Analyze;
+using System.Linq;
 namespace TahsinsLibrary.Geometry
 {
-    public interface IOffset
+    public interface ITranslate
     {
         public Vector2D offset { get; set; }
-        public Vector2D[] ApplyOffset();
-        public Vector2D[] ApplyOffset(Vector2D offset);
-        public Vector2D[] ApplyOffset(Vector2D[] points);
-        public static Vector2D[] ApplyOffset(Vector2D[] vertices, Vector2D offset)
+        public Vector2D[] Translate();
+        public Vector2D[] Translate(Vector2D offset);
+        public Vector2D[] Translate(Vector2D[] points);
+        public static Vector2D[] Translate(Vector2D[] vertices, Vector2D offset)
         {
             Vector2D[] result = new Vector2D[vertices.Length];
             for (int i = 0; i < result.Length; i++)
@@ -35,7 +36,27 @@ namespace TahsinsLibrary.Geometry
             return result;
         }
     }
-    public interface ITransform : IRotate, IOffset
+    public interface IScale
+    {
+        Vector2D scale { get; set; }
+        public Vector2D[] Scale();
+        public Vector2D[] Scale(Vector2D scale);
+        public Vector2D[] Scale(Vector2D[] points);
+        public static Vector2D[] Scale(Vector2D[] vertices, Vector2D scale)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = new Vector2D(vertices[i].x * scale.x, vertices[i].y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(vertices);
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] -= center;
+            }
+            return vertices;
+        }
+    }
+    public interface ITransform : IRotate, ITranslate, IScale
     {
         public Vector2D[] points { get; }
         public Vector2D[] ApplyTransform();
@@ -145,35 +166,109 @@ namespace TahsinsLibrary.Geometry
             return detereminant == 0 ? new(float.NaN, float.NaN) : new Vector2D(b2 * c1 - b1 * c2, a1 * c2 - a2 * c1) / detereminant;
         }
         public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs(x - point.x * y - point.y));
-
+        public static Vector2D Center(params Vector2D[] vectors)
+        {
+            Vector2D center = new Vector2D();
+            foreach (Vector2D v in vectors)
+            {
+                center += v;
+            }
+            center /= vectors.Length;
+            return center;
+        }
+        public static (float, float, float, float) GetSegment(params Vector2D[] resources)
+        {
+            float[] x = new float[resources.Length];
+            float[] y = new float[resources.Length];
+            for (int i = 0; i < resources.Length; i++)
+            {
+                x[i] = resources[i].x;
+                y[i] = resources[i].y;
+            }
+            return (x.Min(), x.Max(), y.Min(), y.Max());
+        }
+        public static (float, float, float, float) GetSegment(params Vector2D[][] resources)
+        {
+            float xMin = float.MaxValue, xMax = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue;
+            foreach (Vector2D[] vectors in resources)
+            {
+                float[] x = new float[vectors.Length], y = new float[vectors.Length];
+                for (int i = 0; i < vectors.Length; i++)
+                {
+                    x[i] = vectors[i].x;
+                    y[i] = vectors[i].y;
+                }
+                (float, float) xn = (x.Min(), x.Max());
+                (float, float) yn = (y.Min(), y.Max());
+                xMin = xn.Item1 < xMin ? xn.Item1 : xMin;
+                xMax = xn.Item2 > xMax ? xn.Item2 : xMax;
+                yMin = yn.Item1 < yMin ? yn.Item1 : yMin;
+                yMax = yn.Item2 > yMax ? yn.Item2 : yMax;
+            }
+            return (xMin, xMax, yMin, yMax);
+        }
+        public static (float, float, float, float) GetSegment(params (float, float, float, float)[] segments)
+        {
+            float xMin, xMax, yMin, yMax;
+            xMin = float.MaxValue;
+            yMin = float.MaxValue;
+            xMax = float.MinValue;
+            yMax = float.MinValue;
+            foreach ((float, float, float, float) segment in segments)
+            {
+                if (xMin > segment.Item1) xMin = segment.Item1;
+                if (xMax < segment.Item2) xMax = segment.Item2;
+                if (yMin > segment.Item3) yMin = segment.Item3;
+                if (yMax < segment.Item4) yMax = segment.Item4;
+            }
+            return (xMin, xMax, yMin, yMax);
+        }
+        public static Vector2D ToCenter(int width, int height, params Vector2D[] resources)
+        {
+            (float, float, float, float) segment = GetSegment(resources);
+            Vector2D centerOfSegment = new Vector2D(segment.Item2 - segment.Item1, segment.Item4 - segment.Item3) / 2f;
+            Vector2D center = new Vector2D(width, height) / 2f;
+            return centerOfSegment - center;
+        }
+        public bool AxisBiggerThan(float number)
+        {
+            return x > number || y > number;
+        }
     }
     public abstract class Shape2D : ITransform
     {
         public abstract float area { get; }
         public abstract Vector2D[] points { get; }
         public abstract Vector2D centroid { get; }
-        public Vector2D offset { get; set; }
-        public float rotation { get; set; }
+        public Vector2D offset { get; set; } = new Vector2D();
+        public float rotation { get; set; } = 0f;
+        public Vector2D scale { get; set; } = new Vector2D(1f, 1f);
 
-        public Vector2D[] ApplyOffset()
+        public Vector2D[] Translate()
         {
             Vector2D[] result = new Vector2D[points.Length];
             for (int i = 0; i < result.Length; i++) result[i] = points[i] + offset;
             return result;
         }
 
-        public Vector2D[] ApplyOffset(Vector2D offset)
+        public Vector2D[] Translate(Vector2D offset)
         {
             Vector2D[] result = new Vector2D[points.Length];
             for (int i = 0; i < result.Length; i++) result[i] = points[i] + offset;
             return result;
         }
 
-        public Vector2D[] ApplyOffset(Vector2D[] points) => IOffset.ApplyOffset(points, offset);
+        public Vector2D[] Translate(Vector2D[] points) => ITranslate.Translate(points, offset);
 
-        public Vector2D[] ApplyTransform() => ApplyOffset(Rotate());
+        public Vector2D[] ApplyTransform()
+        {
+            Vector2D[] result = Scale();
+            result = Rotate(result);
+            result = Translate(result);
+            return result;
+        }
 
-        public Vector2D[] GetTransformedPoints() => ApplyOffset(Rotate());
+        public Vector2D[] GetTransformedPoints() => Scale(Rotate(Translate()));
 
         public Vector2D[] Rotate()
         {
@@ -197,9 +292,142 @@ namespace TahsinsLibrary.Geometry
 
         public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
         public abstract Line2D[] ToLines();
+        public virtual Line2D[] ToTransformedLines()
+        {
+            List<Line2D> lines = new List<Line2D>();
+            Vector2D[] transformed = ApplyTransform();
+            for (int i = 0; i < transformed.Length - 1; i++)
+            {
+                lines.Add(new Line2D() { from = transformed[i], to = transformed[i + 1] });
+            }
+            lines.Add(new Line2D() { from = transformed[0], to = transformed[^1] });
+            return lines.ToArray();
+        }
+        public virtual Vector2D[] GetOutlines()
+        {
+            List<Vector2D> temp = new List<Vector2D>();
+            foreach (Line2D line in ToLines())
+            {
+                foreach (Vector2D v in line.GetPoints())
+                {
+                    temp.Add(v);
+                }
+            }
+            return temp.ToArray();
+        }
+        public virtual Vector2D[] GetTransformedOutlines()
+        {
+            List<Vector2D> temp = new List<Vector2D>();
+            foreach (Line2D line in ToTransformedLines())
+            {
+                foreach (Vector2D v in line.GetPoints())
+                {
+                    temp.Add(v);
+                }
+            }
+            return temp.ToArray();
+        }
         public abstract bool InSegment(Vector2D point);
         public abstract (float, float, float, float) GetSegment();
         public abstract bool IsPointInside(Vector2D point);
+        public abstract void Normalize();
+
+        public Vector2D[] Scale()
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new Vector2D(points[i].x * scale.x, points[i].y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(result);
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] -= center;
+            }
+            return result;
+        }
+
+        public Vector2D[] Scale(Vector2D scale)
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new Vector2D(points[i].x * scale.x, points[i].y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(result);
+            for (int i = 0; i < result.Length; i++)
+            {
+                //result[i] -= center;
+            }
+            return result;
+        }
+
+        public Vector2D[] Scale(Vector2D[] points)
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new Vector2D(points[i].x * scale.x, points[i].y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(result);
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] -= center;
+            }
+            return result;
+        }
+        public Vector2D[] Fit(int width, int height)
+        {
+            width -= 1;
+            height -= 1;
+            (float, float, float, float) segment = Vector2D.GetSegment(points);
+            Vector2D scale = new Vector2D(width / MathF.Abs(segment.Item2 - segment.Item1), height / MathF.Abs(segment.Item4 - segment.Item3));
+            List<Vector2D> temp = new List<Vector2D>();
+            foreach (Vector2D v in points)
+            {
+                temp.Add(new Vector2D(v.x * scale.x, v.y * scale.y));
+            }
+            Vector2D center = Vector2D.Center(temp.ToArray());
+            for (int i = 0; i < temp.Count; i++)
+            {
+                temp[i] -= center;
+            }
+            segment = Vector2D.GetSegment(temp.ToArray());
+            Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+            for (int i = 0; i < temp.Count; i++)
+            {
+                temp[i] -= offset;
+            }
+            return temp.ToArray();
+        }
+        public Vector2D[] Fit(int width, int height, bool keepRatio = false)
+        {
+            if (keepRatio)
+            {
+                width -= 1;
+                height -= 1;
+                (float, float, float, float) segment = Vector2D.GetSegment(points);
+                float scale = MathF.Min(width / MathF.Abs(segment.Item2 - segment.Item1), height / MathF.Abs(segment.Item4 - segment.Item3));
+                List<Vector2D> temp = new List<Vector2D>();
+                foreach (Vector2D v in points)
+                {
+                    temp.Add(new Vector2D(v.x * scale, v.y * scale));
+                }
+                Vector2D center = Vector2D.Center(temp.ToArray());
+                for (int i = 0; i < temp.Count; i++)
+                {
+                    temp[i] -= center;
+                }
+                segment = Vector2D.GetSegment(temp.ToArray());
+                Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+                for (int i = 0; i < temp.Count; i++)
+                {
+                    temp[i] -= offset;
+                }
+                return temp.ToArray();
+            }
+            else return Fit(width, height);
+        }
     }
     public sealed class Triangle : Shape2D
     {
@@ -268,6 +496,14 @@ namespace TahsinsLibrary.Geometry
             float w2 = p.y - a.y - w1 * (b.y - a.y);
             w2 /= c.y - a.y;
             return w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
+        }
+
+        public override void Normalize()
+        {
+            Vector2D center = centroid;
+            pointA -= centroid;
+            pointB -= centroid;
+            pointC -= centroid;
         }
 
         public override Line2D[] ToLines()
@@ -391,7 +627,7 @@ namespace TahsinsLibrary.Geometry
                 vertices[i] = this.vertices[temp[i].Item2];
             }
             this.vertices = vertices;
-            Console.WriteLine("Sortinge Process Ended");
+            Console.WriteLine("Sorting Process Ended");
         }
         public Vector2D[] GetPointsInside()
         {
@@ -424,7 +660,6 @@ namespace TahsinsLibrary.Geometry
                     if (Vector2D.Intersecting(vertices[i], vertices[i + 1], vertices[j], vertices[j + 1], out Vector2D point))
                     {
                         temp.Add(point);
-                        Console.WriteLine("X");
                     }
                 }
             }
@@ -478,6 +713,15 @@ namespace TahsinsLibrary.Geometry
             float yMax = Compare.Max(temp.ToArray());
             return (xMin, xMax, yMin, yMax);
         }
+
+        public override void Normalize()
+        {
+            Vector2D vector = centroid;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] -= vector;
+            }
+        }
     }
     public sealed class Line2D : ITransform
     {
@@ -490,19 +734,21 @@ namespace TahsinsLibrary.Geometry
 
         public Vector2D[] points => new Vector2D[] { from, to };
 
-        public Vector2D[] ApplyOffset()
+        public Vector2D scale { get; set; }
+
+        public Vector2D[] Translate()
         {
             return new Vector2D[] { from + offset, to + offset };
         }
 
-        public Vector2D[] ApplyOffset(Vector2D offset)
+        public Vector2D[] Translate(Vector2D offset)
         {
             return new Vector2D[] { from + offset, to + offset };
         }
 
-        public Vector2D[] ApplyOffset(Vector2D[] points) => IOffset.ApplyOffset(points, offset);
+        public Vector2D[] Translate(Vector2D[] points) => ITranslate.Translate(points, offset);
 
-        public Vector2D[] ApplyTransform() => ApplyOffset(Rotate());
+        public Vector2D[] ApplyTransform() => Scale(Rotate(Translate()));
 
         public Vector2D[] GetPoints()
         {
@@ -576,6 +822,230 @@ namespace TahsinsLibrary.Geometry
 
         public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
 
+        public Vector2D[] Scale()
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                Vector2D temp = points[i];
+                result[i] = new Vector2D(temp.x * scale.x, temp.y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(result);
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] -= center;
+            }
+            return result;
+        }
+
+        public Vector2D[] Scale(Vector2D scale)
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                Vector2D temp = points[i];
+                result[i] = new Vector2D(temp.x * scale.x, temp.y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(result);
+            for (int i = 0; i < result.Length; i++)
+            {
+                //result[i] -= center;
+            }
+            return result;
+        }
+
+        public Vector2D[] Scale(Vector2D[] points)
+        {
+            Vector2D[] result = new Vector2D[points.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                Vector2D temp = points[i];
+                result[i] = new Vector2D(temp.x * scale.x, temp.y * scale.y);
+            }
+            Vector2D center = Vector2D.Center(result);
+            for (int i = 0; i < result.Length; i++)
+            {
+                //result[i] -= center;
+            }
+            return result;
+        }
+    }
+    public sealed class ShapeGroup
+    {
+        public List<Shape2D> group = new List<Shape2D>();
+        public Dictionary<Shape2D, Vector2D> origins = new Dictionary<Shape2D, Vector2D>();
+        public void Add(Shape2D shape)
+        {
+            group.Add(shape);
+            origins.Add(shape, Vector2D.Center(shape.points));
+        }
+        public Vector2D[] GetOutlines(Vector2D offset, Vector2D scale)
+        {
+            List<Vector2D> temp = new List<Vector2D>();
+            foreach (Shape2D shape in group)
+            {
+                Vector2D[] buffer = shape.points.Clone() as Vector2D[];
+                buffer = IScale.Scale(buffer, scale);
+                Vector2D calc = new Vector2D(origins[shape].x * scale.x, origins[shape].y * scale.y);
+                buffer = ITranslate.Translate(buffer, calc + offset);
+                Line2D[] lines = new Line2D[buffer.Length];
+                for (int i = 0; i < buffer.Length - 1; i++)
+                {
+                    lines[i] = new Line2D() { from = buffer[i], to = buffer[i + 1] };
+                }
+                lines[^1] = new Line2D() { from = buffer[0], to = buffer[^1] };
+                foreach (Line2D line in lines)
+                {
+                    foreach (Vector2D v in line.GetPoints())
+                    {
+                        temp.Add(v);
+                    }
+                }
+            }
+            return temp.ToArray();
+        }
+        public void RecalculateOrigins()
+        {
+            List<Vector2D> allPoints = new List<Vector2D>();
+            Dictionary<Shape2D, Vector2D> localCenter = new Dictionary<Shape2D, Vector2D>();
+            foreach (Shape2D shape in group)
+            {
+                foreach (Vector2D v in shape.points)
+                {
+                    allPoints.Add(v);
+                }
+                localCenter.Add(shape, Vector2D.Center(shape.points));
+            }
+            Vector2D center = Vector2D.Center(allPoints.ToArray());
+            foreach (Shape2D key in origins.Keys.ToArray())
+            {
+                origins[key] = localCenter[key] - center;
+            }
+        }
+        public Vector2D[] Fit(int width, int height)
+        {
+            width--;
+            height--;
+            List<Vector2D> result = new List<Vector2D>();
+            (float, float, float, float) segment = GetSegment();
+            Vector2D scale = new Vector2D((float)width / MathF.Abs(segment.Item2 - segment.Item1), (float)height / MathF.Abs(segment.Item4 - segment.Item3));
+            List<Line2D> lines = new List<Line2D>();
+            foreach (Shape2D shape in group)
+            {
+                Vector2D[] points = shape.points.Clone() as Vector2D[];
+                for (int i = 0; i < points.Length; i++)
+                {
+                    float x = points[i].x, y = points[i].y;
+                    points[i] = new Vector2D(x * scale.x, y * scale.y);
+                }
+                for (int i = 0; i < points.Length - 1; i++)
+                {
+                    lines.Add(new Line2D() { from = points[i], to = points[i + 1] });
+                    result.Add(points[i]);
+                }
+                result.Add(points[^1]);
+                lines.Add(new Line2D() { from = points[0], to = points[^1] });
+            }
+            segment = Vector2D.GetSegment(result.ToArray());
+            scale = new Vector2D((float)width / MathF.Abs(segment.Item2 - segment.Item1), (float)height / MathF.Abs(segment.Item4 - segment.Item3));
+            for (int i = 0; i < lines.Count; i++)
+            {
+                lines[i].from = new Vector2D(scale.x * lines[i].from.x, scale.y * lines[i].from.y);
+                lines[i].to = new Vector2D(scale.x * lines[i].to.x, scale.y * lines[i].to.y);
+            }
+            result.Clear();
+            foreach (Line2D line in lines)
+            {
+                foreach (Vector2D v in line.GetPoints())
+                {
+                    result.Add(v);
+                }
+            }
+            segment = Vector2D.GetSegment(result.ToArray());
+            Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+            for (int i = 0; i < result.Count; i++)
+            {
+                result[i] -= offset;
+            }
+            return result.ToArray();
+        }
+        public Vector2D[] Fit(int width, int height, bool keepRatio)
+        {
+            if (keepRatio)
+            {
+                width--;
+                height--;
+                List<Vector2D> result = new List<Vector2D>();
+                (float, float, float, float) segment = GetSegment();
+                float scale = MathF.Min(width / (segment.Item2 - segment.Item1), height / (segment.Item4 - segment.Item3));
+                List<Line2D> lines = new List<Line2D>();
+                foreach (Shape2D shape in group)
+                {
+                    Vector2D[] points = shape.points.Clone() as Vector2D[];
+                    for (int i = 0; i < points.Length; i++)
+                    {
+                        float x = points[i].x, y = points[i].y;
+                        points[i] = new Vector2D(x * scale, y * scale);
+                    }
+                    for (int i = 0; i < points.Length - 1; i++)
+                    {
+                        lines.Add(new Line2D() { from = points[i], to = points[i + 1] });
+                        result.Add(points[i]);
+                    }
+                    result.Add(points[^1]);
+                    lines.Add(new Line2D() { from = points[0], to = points[^1] });
+                }
+                segment = Vector2D.GetSegment(result.ToArray());
+                scale = MathF.Min(width / (segment.Item2 - segment.Item1), height / (segment.Item4 - segment.Item3));
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    lines[i].from = new Vector2D(scale * lines[i].from.x, scale * lines[i].from.y);
+                    lines[i].to = new Vector2D(scale * lines[i].to.x, scale * lines[i].to.y);
+                }
+                result.Clear();
+                foreach (Line2D line in lines)
+                {
+                    foreach (Vector2D v in line.GetPoints())
+                    {
+                        result.Add(v);
+                    }
+                }
+                segment = Vector2D.GetSegment(result.ToArray());
+                Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+                for (int i = 0; i < result.Count; i++)
+                {
+                    result[i] -= offset;
+                }
+                return result.ToArray();
+            }
+            else return Fit(width, height);
+        }
+        public Vector2D[] GetPoints(Vector2D offset, Vector2D scale)
+        {
+            List<Vector2D> temp = new List<Vector2D>();
+            foreach (Shape2D shape in group)
+            {
+                Vector2D[] buffer = shape.points.Clone() as Vector2D[];
+                buffer = IScale.Scale(buffer, scale);
+                Vector2D calc = new Vector2D(origins[shape].x * scale.x, origins[shape].y * scale.y);
+                buffer = ITranslate.Translate(buffer, calc + offset);
+                foreach (Vector2D v in buffer)
+                {
+                    temp.Add(v);
+                }
+            }
+            return temp.ToArray();
+        }
+        public (float, float, float, float)[] GetSegments()
+        {
+            List<(float, float, float, float)> segments = new List<(float, float, float, float)>();
+            foreach (Shape2D shape in group)
+            {
+                segments.Add(shape.GetSegment());
+            }
+            return segments.ToArray();
+        }
+        public (float, float, float, float) GetSegment() => Vector2D.GetSegment(GetSegments());
     }
     public static class GeometryUtility
     {
@@ -620,5 +1090,15 @@ namespace TahsinsLibrary.Geometry
             return new FreePolygon2D() { vertices = points };
         }
         public static void Intersect(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false) { }
+        public static Line2D[] BuildLinesFrom(Vector2D[] points)
+        {
+            Line2D[] lines = new Line2D[points.Length];
+            for (int i = 0; i < lines.Length - 1; i++)
+            {
+                lines[i] = new Line2D() { from = points[i], to = points[i + 1] };
+            }
+            lines[^1] = new Line2D() { from = points[0], to = points[^1] };
+            return lines;
+        }
     }
 }

@@ -240,6 +240,15 @@ namespace TahsinsLibrary.Analyze
 {
     public static class AnalyzeF
     {
+        public static bool[] DissectToBits(int number)
+        {
+            List<bool> temp = new List<bool>();
+            foreach (char c in Convert.ToString(number, 2))
+            {
+                temp.Add(c == '1');
+            }
+            return temp.ToArray();
+        }
         public static (List<string>, List<int>) AnalyzeByteList(List<byte> resource, bool writeToConsole = false, int writeBy = 0)
         {
             List<string> including = new List<string>();

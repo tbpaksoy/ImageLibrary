@@ -129,6 +129,14 @@ namespace Tahsin
             return result;
         }
     };
+    class IScale
+    {
+    public:
+        Vector2D scale = Vector2D(1.0, 1.0);
+        virtual vector<Vector2D> ApplyScale() = 0;
+        virtual vector<Vector2D> ApplyScale(Vector2D scale) = 0;
+        virtual vector<Vector2D> ApplyScale(vector<Vector2D> points) = 0;
+    };
     class ITransform : public IRotate, public IOffset
     {
     public:
@@ -467,14 +475,13 @@ namespace Tahsin
             }
             return result;
         }
-        vector<Vector2D> ApplyTransform() override{}
-        vector<Vector2D> GetTransformedPoints() override{}
+        vector<Vector2D> ApplyTransform() override {}
+        vector<Vector2D> GetTransformedPoints() override {}
         vector<Vector2D> Rotate() override
         {
-            
         }
-        vector<Vector2D> Rotate(float rotation) override{}
-        vector<Vector2D> Rotate(vector<Vector2D> vertices) override{}
+        vector<Vector2D> Rotate(float rotation) override {}
+        vector<Vector2D> Rotate(vector<Vector2D> vertices) override {}
     };
     FreePolygon2D *GetCircle(float radius = 1.0, int resolution = 16)
     {

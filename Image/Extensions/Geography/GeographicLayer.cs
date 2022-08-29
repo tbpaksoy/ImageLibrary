@@ -26,7 +26,7 @@ namespace TahsinsLibrary.Geography.Layers
             Random random = new Random();
             for (int i = 0; i < iterationCount; i++)
             {
-                
+
             }
         }
         public override Biome[,] GetData()

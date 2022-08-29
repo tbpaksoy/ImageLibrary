@@ -29,11 +29,24 @@ namespace TahsinsLibrary.Compression
             node.parent = parent = n;
             return n;
         }
-        public HuffmanNode<T> Go(bool way)
+        public T GetData(params bool[] road)
         {
-            if (way) return left;
-            else return right;
+            HuffmanNode<T> active = this;
+            foreach (bool b in road)
+            {
+                if (b && active.left != null)
+                {
+                    active = active.left;
+                }
+                else if (!b && active.right != null)
+                {
+                    active = active.right;
+                }
+                else break;
+            }
+            return active.data;
         }
+        public T GetData(List<bool> road) => GetData(road.ToArray());
         public static void Traverse(HuffmanNode<T> node)
         {
             if (node == null) return;
@@ -41,11 +54,35 @@ namespace TahsinsLibrary.Compression
             Traverse(node.right);
             Traverse(node.left);
         }
+        public Dictionary<T, bool[]> GetTable()
+        {
+            Dictionary<T, bool[]> result = new Dictionary<T, bool[]>();
+            Stack<HuffmanNode<T>> temp = new Stack<HuffmanNode<T>>();
+            HuffmanNode<T> active = this;
+            List<bool> roadMap = new List<bool>();
+            while (active != null || temp.Count > 0)
+            {
+                while (active != null)
+                {
+                    temp.Push(active);
+                    active = active.left;
+                    roadMap.Add(true);
+                }
+                active = temp.Pop();
+                if (!EqualityComparer<T>.Default.Equals(active.data, (T)default))
+                {
+                    result.TryAdd(active.data, roadMap.ToArray()[1..^0]);
+                }
+                roadMap.RemoveAt(roadMap.Count - 1);
+                active = active.right;
+                roadMap.Add(false);
+            }
+            return result;
+        }
     }
     public static class Compression
     {
-
-        public static HuffmanNode<T> HuffmanAsNode<T>(T[] data)
+        public static HuffmanNode<T> Huffman<T>(T[] data)
         {
             Dictionary<T, int> dataQuantity = new Dictionary<T, int>();
             foreach (T t in data)
@@ -67,8 +104,8 @@ namespace TahsinsLibrary.Compression
             }
             while (list.Count > 1)
             {
-                HuffmanNode<T> node0 = list[^1];
-                HuffmanNode<T> node1 = list[^2];
+                HuffmanNode<T> node0 = list[^0];
+                HuffmanNode<T> node1 = list[^1];
                 list.RemoveAt(list.Count - 1);
                 list.RemoveAt(list.Count - 1);
                 list.Add(node1.UniteWith(node0));
@@ -77,47 +114,15 @@ namespace TahsinsLibrary.Compression
             }
             return list[0];
         }
-        public static T[] HuffmanAsArray<T>(T[] data)
+        public static HuffmanNode<T> Huffman<T>(List<T> data) => Huffman<T>(data.ToArray());
+        public static string[] LZ77(List<char> list)
         {
-            Dictionary<T, int> dataQuantity = new Dictionary<T, int>();
-            foreach (T t in data)
+            List<string> result = new List<string>();
+            while (list.Count > 0)
             {
-                if (!dataQuantity.TryAdd(t, 1))
-                {
-                    dataQuantity[t]++;
-                }
+
             }
-            List<KeyValuePair<T, int>> quantity = new List<KeyValuePair<T, int>>();
-            foreach (KeyValuePair<T, int> pair in dataQuantity.OrderBy(key => key.Value))
-            {
-                quantity.Add(pair);
-            }
-            Queue<HuffmanNode<T>> queue = new Queue<HuffmanNode<T>>();
-            quantity.Reverse();
-            foreach (KeyValuePair<T, int> i in quantity)
-            {
-                queue.Enqueue(new HuffmanNode<T>(i.Key, i.Value));
-            }
-            while (queue.Count > 1)
-            {
-                HuffmanNode<T> node = queue.Dequeue().UniteWith(queue.Dequeue());
-                queue.Enqueue(node);
-            }
-            List<T> list = new List<T>();
-            HuffmanNode<T> active = queue.Dequeue();
-            Stack<HuffmanNode<T>> stack = new Stack<HuffmanNode<T>>();
-            while (active != null || stack.Count > 0)
-            {
-                while (active != null)
-                {
-                    stack.Push(active);
-                    active = active.left;
-                }
-                active = stack.Pop();
-                list.Add(active.data);
-                active = active.right;
-            }
-            return list.ToArray();
+            return result.ToArray();
         }
     }
 }

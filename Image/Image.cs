@@ -149,7 +149,7 @@ namespace TahsinsLibrary
         {
             return new Color((r + color.r) / 2, (g + color.g) / 2, (b + color.b) / 2, (a + color.a) / 2);
         }
-        public static Color GetMildColor(Color a, Color b)
+        public static Color GetMidColor(Color a, Color b)
         {
             return a.GetMidColor(b);
         }
