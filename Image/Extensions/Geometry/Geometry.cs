@@ -234,6 +234,13 @@ namespace TahsinsLibrary.Geometry
         {
             return x > number || y > number;
         }
+        public static Vector2D Interpolate(Vector2D a, Vector2D b, float t)
+        {
+            t = MathF.Abs(t);
+            if (t > 1f) t %= 1f;
+            return a + (b - a) * t;
+        }
+        public static Vector2D QuadraticInterpolate(Vector2D a, Vector2D b, Vector2D c, float t) => Interpolate(Interpolate(a, b, t), Interpolate(b, c, t), t);
     }
     public abstract class Shape2D : ITransform
     {
@@ -428,6 +435,28 @@ namespace TahsinsLibrary.Geometry
             }
             else return Fit(width, height);
         }
+        public Vector2D[] Smooth(int quality)
+        {
+            List<Vector2D> temp = new List<Vector2D>();
+            Vector2D[] points = this.points.Clone() as Vector2D[];
+            for (int i = 1; i < quality + 1; i++)
+            {
+                temp.Add(Vector2D.QuadraticInterpolate((points[^1] + points[0]) / 2f, points[0], (points[0] + points[1]) / 2f, 1f / quality * i));
+            }
+            for (int i = 1; i < points.Length - 1; i++)
+            {
+                for (int j = 1; j < quality + 1; j++)
+                {
+                    temp.Add(Vector2D.QuadraticInterpolate((points[i - 1] + points[i]) / 2f, points[i], (points[i] + points[i + 1]) / 2f, 1f / quality * j));
+                }
+            }
+            for (int i = 1; i < quality + 1; i++)
+            {
+                temp.Add(Vector2D.QuadraticInterpolate((points[^2] + points[^1]) / 2f, points[^1], (points[^1] + points[0]) / 2f, 1f / quality * i));
+            }
+            return temp.ToArray();
+        }
+        public abstract FreePolygon2D GetSmoothVersion(int quality);
     }
     public sealed class Triangle : Shape2D
     {
@@ -477,6 +506,8 @@ namespace TahsinsLibrary.Geometry
             return (xMin, xMax, yMin, yMax);
         }
 
+        public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = Smooth(quality) };
+
         public override bool InSegment(Vector2D point)
         {
             (float, float, float, float) segment = GetSegment();
@@ -515,6 +546,7 @@ namespace TahsinsLibrary.Geometry
                 new(){from = pointC, to = pointA}
             };
         }
+
     }
     public class FreePolygon2D : Shape2D
     {
@@ -722,6 +754,8 @@ namespace TahsinsLibrary.Geometry
                 vertices[i] -= vector;
             }
         }
+
+        public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = Smooth(quality) };
     }
     public sealed class Line2D : ITransform
     {

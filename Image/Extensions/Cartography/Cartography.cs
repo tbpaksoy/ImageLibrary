@@ -1,7 +1,9 @@
+using TahsinsLibrary.Geometry;
+using System;
 namespace TahsinsLibrary.Cartography
 {
-    public abstract class Marking
+    public class Map
     {
-        public abstract void EffectOnMap(ref Color[,] map);
+        
     }
 }
