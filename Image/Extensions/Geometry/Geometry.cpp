@@ -3,7 +3,6 @@
 #include <tuple>
 #include <limits>
 #include <algorithm>
-#include <map>
 using namespace std;
 namespace Tahsin
 {
@@ -54,10 +53,6 @@ namespace Tahsin
         {
             return Vector2D(x / value, y / value);
         }
-        bool operator<(Vector2D v)
-        {
-            return GetMagnitude() < v.GetMagnitude();
-        }
         static bool OnSegment(Vector2D p, Vector2D q, Vector2D r)
         {
             return q.GetX() <= max(p.GetX(), r.GetX()) && q.GetX() >= min(p.GetX(), r.GetX()) && q.GetY() <= max(p.GetY(), r.GetY()) && q.GetY() >= min(p.GetY(), r.GetY());
@@ -94,78 +89,52 @@ namespace Tahsin
         {
             return (int)y;
         }
-        float GetMagnitude()
+        static float Distance(Vector2D a, Vector2D b)
         {
-            return sqrtf(x * x + y * y);
+            return sqrt(abs((a.x - b.x) * (a.y - b.y)));
         }
-        static tuple<float, float, float, float> GetSegment(vector<Vector2D> resource)
+        float Distance(Vector2D v)
         {
-            vector<float> x;
-            vector<float> y;
+            return sqrt(abs((x - v.x) * (y - v.y)));
+        }
+        static Vector2D Center(vector<Vector2D> resource)
+        {
+            Vector2D center = Vector2D();
             for (Vector2D v : resource)
             {
-                x.push_back(v.x);
-                y.push_back(v.y);
+                center = center + v;
             }
-            return make_tuple(
-                *min_element(x.begin(), x.end()),
-                *max_element(x.begin(), x.end()),
-                *min_element(y.begin(), y.end()),
-                *max_element(y.begin(), y.end()));
+            center = center / resource.size();
+            return center;
         }
-        static tuple<float, float, float, float> GetSegment(vector<vector<Vector2D>> resource)
+        static Vector2D ToCenter(vector<Vector2D> resource)
         {
-            vector<float> x;
-            vector<float> y;
-            for (vector<Vector2D> v : resource)
-            {
-                for (Vector2D vv : v)
-                {
-                    x.push_back(vv.x);
-                    y.push_back(vv.y);
-                }
-            }
-            return make_tuple(
-                *min_element(x.begin(), x.end()),
-                *max_element(x.begin(), x.end()),
-                *min_element(y.begin(), y.end()),
-                *max_element(y.begin(), y.end()));
+            return Vector2D() - Center(resource);
         }
-        static tuple<float, float, float, float> GetSegment(vector<tuple<float, float, float, float>> resource)
+        static Vector2D Interpolate(Vector2D a, Vector2D b, float t)
         {
-            vector<float> xMin, xMax, yMin, yMax;
-            for (tuple<float, float, float, float> t : resource)
-            {
-                xMin.push_back(get<0>(t));
-                xMax.push_back(get<1>(t));
-                yMin.push_back(get<2>(t));
-                xMax.push_back(get<3>(t));
-            }
-            return make_tuple(*min_element(xMin.begin(), xMin.end()), *max_element(xMax.begin(), xMax.end()),
-                              *min_element(yMin.begin(), yMin.end()), *max_element(yMax.begin(), yMax.end()));
+            t = abs(t);
+            if (t > 1)
+                t -= (int)t;
+            return a + (b - a) * t;
         }
-        static Vector2D GetCenter(vector<Vector2D> resources)
+        static Vector2D QuadraticInterpolate(Vector2D a, Vector2D b, Vector2D c, float t)
         {
-            Vector2D vector = Vector2D();
-            for (Vector2D v : resources)
-            {
-                vector = v + vector;
-            }
-            return vector / resources.size();
+            return Interpolate(Interpolate(a, b, t), Interpolate(b, c, t), t);
         }
     };
     const Vector2D Vector2D::up = Vector2D(0, 1);
     const Vector2D Vector2D::down = Vector2D(0, -1);
     const Vector2D Vector2D::left = Vector2D(1, 0);
     const Vector2D Vector2D::right = Vector2D(-1, 0);
-    class ITranslate
+    class IOffset
     {
     public:
         Vector2D offset;
-        virtual vector<Vector2D> Translate() = 0;
-        virtual vector<Vector2D> Translate(Vector2D offset) = 0;
-        virtual vector<Vector2D> Translate(vector<Vector2D> points) = 0;
-        static vector<Vector2D> Translate(vector<Vector2D> vertices, Vector2D offset)
+        virtual vector<Vector2D> ApplyOffset() = 0;
+        virtual vector<Vector2D> ApplyOffset(Vector2D offset) = 0;
+        virtual vector<Vector2D> ApplyOffset(vector<Vector2D> points) = 0;
+        static vector<Vector2D> ApplyOffset(vector<Vector2D> vertices, Vector2D offset)
         {
             vector<Vector2D> result;
             for (int i = 0; i < vertices.size(); i++)
@@ -200,17 +169,8 @@ namespace Tahsin
         virtual vector<Vector2D> ApplyScale() = 0;
         virtual vector<Vector2D> ApplyScale(Vector2D scale) = 0;
         virtual vector<Vector2D> ApplyScale(vector<Vector2D> points) = 0;
-        static vector<Vector2D> ApplyScale(vector<Vector2D> points, Vector2D scale)
-        {
-            vector<Vector2D> result;
-            for (Vector2D v : points)
-            {
-                result.push_back(Vector2D(v.GetX() * scale.GetX(), v.GetY() * v.GetY()));
-            }
-            return result;
-        }
     };
-    class ITransform : public IRotate, public ITranslate
+    class ITransform : public IRotate, public IOffset
     {
     public:
         virtual vector<Vector2D> GetPoints() = 0;
@@ -230,81 +190,6 @@ namespace Tahsin
             tuple<float, float, float, float> segment = GetSegment();
             float x = point.GetX(), y = point.GetY();
             return !(x < get<0>(segment) || x > get<1>(segment) || y < get<2>(segment) || y > get<3>(segment));
-        }
-        virtual vector<Line2D *> ToLines()
-        {
-            vector<Line2D *> temp;
-            vector<Vector2D> points = GetPoints();
-            for (int i = 0; i < points.size() - 1; i++)
-            {
-                temp.push_back(new Line2D(points[i], points[i + 1]));
-            }
-            return temp;
-        }
-        virtual vector<Vector2D> GetOutLines()
-        {
-            vector<Vector2D> result;
-            for (Line2D *line : ToLines())
-            {
-                for (Vector2D p : line->GetPoints())
-                {
-                    result.push_back(p);
-                }
-            }
-            return result;
-        }
-        vector<Vector2D> Fit(int width, int height)
-        {
-            width--;
-            height--;
-            tuple<float, float, float, float> segment = Vector2D::GetSegment(GetPoints());
-            Vector2D scale = Vector2D(width / (get<1>(segment) - get<0>(segment)), height / (get<3>(segment) - get<2>(segment)));
-            vector<Vector2D> temp;
-            for (Vector2D v : GetPoints())
-            {
-                temp.push_back(v);
-            }
-            Vector2D center = Vector2D::GetCenter(temp);
-            for (int i = 0; i < temp.size(); i++)
-            {
-                temp[i] = temp[i] - center;
-            }
-            segment = Vector2D::GetSegment(temp);
-            Vector2D offset = Vector2D(get<0>(segment), get<2>(segment));
-            for (int i = 0; i < temp.size(); i++)
-            {
-                temp[i] = temp[i] - offset;
-            }
-            return temp;
-        }
-        vector<Vector2D> Fit(int width, int height, bool keepRatio)
-        {
-            if (keepRatio)
-            {
-                width--;
-                height--;
-                tuple<float, float, float, float> segment = Vector2D::GetSegment(GetPoints());
-                float scale = min(width / (get<1>(segment) - get<0>(segment)), height / (get<3>(segment) - get<2>(segment)));
-                vector<Vector2D> temp;
-                for (Vector2D v : GetPoints())
-                {
-                    temp.push_back(v);
-                }
-                Vector2D center = Vector2D::GetCenter(temp);
-                for (int i = 0; i < temp.size(); i++)
-                {
-                    temp[i] = temp[i] - center;
-                }
-                segment = Vector2D::GetSegment(temp);
-                Vector2D offset = Vector2D(get<0>(segment), get<2>(segment));
-                for (int i = 0; i < temp.size(); i++)
-                {
-                    temp[i] = temp[i] - offset;
-                }
-                return temp;
-            }
-            else
-                return Fit(width, height);
         }
     };
     class Line2D : public ITransform
@@ -357,21 +242,21 @@ namespace Tahsin
         {
             return (from + to) / 2;
         }
-        vector<Vector2D> Translate() override
+        vector<Vector2D> ApplyOffset() override
         {
             vector<Vector2D> result;
             result.push_back(from + offset);
             result.push_back(to + offset);
             return result;
         }
-        vector<Vector2D> Translate(Vector2D offset) override
+        vector<Vector2D> ApplyOffset(Vector2D offset) override
         {
             vector<Vector2D> result;
             result.push_back(from + offset);
             result.push_back(to + offset);
             return result;
         }
-        vector<Vector2D> Translate(vector<Vector2D> points) override
+        vector<Vector2D> ApplyOffset(vector<Vector2D> points) override
         {
             vector<Vector2D> result;
             for (Vector2D v : points)
@@ -380,11 +265,6 @@ namespace Tahsin
             }
             return result;
         }
-        vector<Vector2D> Rotate() override {}
-        vector<Vector2D> Rotate(float rotation) {}
-        vector<Vector2D> Rotate(vector<Vector2D> vertices) override {}
-        vector<Vector2D> ApplyTransform() override {}
-        vector<Vector2D> GetTransformedPoints() override {}
     };
     class Triangle : public Shape2D
     {
@@ -481,7 +361,7 @@ namespace Tahsin
             return result;
         }
         vector<Vector2D> Rotate(vector<Vector2D> vertices) override {}
-        vector<Vector2D> Translate() override
+        vector<Vector2D> ApplyOffset() override
         {
             vector<Vector2D> result;
             result.push_back(pointA + offset);
@@ -489,7 +369,7 @@ namespace Tahsin
             result.push_back(pointC + offset);
             return result;
         }
-        vector<Vector2D> Translate(Vector2D offset)
+        vector<Vector2D> ApplyOffset(Vector2D offset)
         {
             vector<Vector2D> result;
             result.push_back(pointA + offset);
@@ -497,7 +377,7 @@ namespace Tahsin
             result.push_back(pointC + offset);
             return result;
         }
-        vector<Vector2D> Translate(vector<Vector2D> offsets) override {}
+        vector<Vector2D> ApplyOffset(vector<Vector2D> offsets) override {}
         tuple<float, float, float, float> GetSegment() override
         {
             vector<float> x;
@@ -601,7 +481,7 @@ namespace Tahsin
                                                                    *min_element(y.begin(), y.end()), *max_element(y.begin(), y.end()));
             return segment;
         }
-        vector<Vector2D> Translate() override
+        vector<Vector2D> ApplyOffset() override
         {
             vector<Vector2D> result;
             for (Vector2D v : vertices)
@@ -610,7 +490,7 @@ namespace Tahsin
             }
             return result;
         }
-        vector<Vector2D> Translate(Vector2D offset) override
+        vector<Vector2D> ApplyOffset(Vector2D offset) override
         {
             vector<Vector2D> result;
             for (Vector2D v : vertices)
@@ -619,7 +499,7 @@ namespace Tahsin
             }
             return result;
         }
-        vector<Vector2D> Translate(vector<Vector2D> resource) override
+        vector<Vector2D> ApplyOffset(vector<Vector2D> resource) override
         {
             vector<Vector2D> result;
             for (Vector2D v : resource)
@@ -635,124 +515,6 @@ namespace Tahsin
         }
         vector<Vector2D> Rotate(float rotation) override {}
         vector<Vector2D> Rotate(vector<Vector2D> vertices) override {}
-    };
-    class ShapeGroup
-    {
-    public:
-        vector<Shape2D *> group;
-        map<Shape2D *, Vector2D> origins;
-        void Add(Shape2D *shape)
-        {
-            group.push_back(shape);
-            origins.insert({shape, Vector2D::GetCenter(shape->GetPoints())});
-        }
-        vector<Vector2D> GetOutlines(Vector2D offset, Vector2D scale)
-        {
-            vector<Vector2D> temp;
-            for (Shape2D *shape : group)
-            {
-                vector<Vector2D> buffer = shape->GetPoints();
-                buffer = IScale::ApplyScale(buffer, scale);
-                Vector2D calc = Vector2D(origins[shape].GetX() * scale.GetX(), origins[shape].GetY() * scale.GetY());
-                buffer = ITranslate::Translate(buffer, calc + offset);
-                vector<Line2D *> lines;
-                for (int i = 0; i < buffer.size() - 1; i++)
-                {
-                    lines.push_back(new Line2D(buffer[i], buffer[i + 1]));
-                }
-                lines.push_back(new Line2D(buffer[0], buffer[buffer.size() - 1]));
-                for (Line2D *line : lines)
-                {
-                    for (Vector2D v : line->GetPoints())
-                    {
-                        temp.push_back(v);
-                    }
-                }
-                return temp;
-            }
-        }
-        void RecalculateOrigins()
-        {
-            vector<Vector2D> allPoints;
-            map<Shape2D *, Vector2D> localCenter;
-            for (Shape2D *shape : group)
-            {
-                for (Vector2D point : shape->GetPoints())
-                {
-                    allPoints.push_back(point);
-                }
-                localCenter.insert(pair<Shape2D *, Vector2D>(shape, Vector2D::GetCenter(shape->GetPoints())));
-            }
-            Vector2D center = Vector2D::GetCenter(allPoints);
-            vector<Shape2D *> keys;
-            for (pair<Shape2D *, Vector2D> p : origins)
-            {
-                keys.push_back(p.first);
-            }
-            for (Shape2D *s : keys)
-            {
-                origins[s] = localCenter[s] - center;
-            }
-        }
-        vector<tuple<float, float, float, float>> GetSegments()
-        {
-            vector<tuple<float, float, float, float>> segments;
-            for (Shape2D *shape : group)
-            {
-                segments.push_back(shape->GetSegment());
-            }
-            return segments;
-        }
-        tuple<float, float, float, float> GetSegment()
-        {
-            return Vector2D::GetSegment(GetSegments());
-        }
-        vector<Vector2D> Fit(int width, int height)
-        {
-            width--;
-            height--;
-            vector<Vector2D> result;
-            tuple<float, float, float, float> segment = GetSegment();
-            Vector2D scale = Vector2D((float)width / abs(get<1>(segment) - get<0>(segment)), (float)height / abs(get<3>(segment) - get<2>(segment)));
-            vector<Line2D *> lines;
-            for (Shape2D *shape : group)
-            {
-                vector<Vector2D> points = shape->GetPoints();
-                for (int i = 0; i < points.size(); i++)
-                {
-                    points[i] = Vector2D(points[i].GetX() * scale.GetX(), points[i].GetY() * scale.GetY());
-                }
-                for (int i = 0; i < points.size() - 1; i++)
-                {
-                    lines.push_back(new Line2D(points[i], points[i + 1]));
-                    result.push_back(points[i]);
-                }
-                result.push_back(points[points.size() - 1]);
-                lines.push_back(new Line2D(points[0], points[points.size() - 1]));
-            }
-            segment = Vector2D::GetSegment(result);
-            scale = Vector2D((float)width / abs(get<1>(segment) - get<0>(segment)), (float)height / abs(get<3>(segment) - get<2>(segment)));
-            for (int i = 0; i < lines.size(); i++)
-            {
-                lines[i]->from = Vector2D(scale.GetX() * lines[i]->from.GetX(), scale.GetY() * lines[i]->from.GetY());
-                lines[i]->to = Vector2D(scale.GetX() * lines[i]->to.GetX(), scale.GetY() * lines[i]->to.GetY());
-            }
-            result.clear();
-            for (Line2D *line : lines)
-            {
-                for (Vector2D v : line->GetPoints())
-                {
-                    result.push_back(v);
-                }
-            }
-            segment = Vector2D::GetSegment(result);
-            Vector2D offset = Vector2D(get<0>(segment), get<2>(segment));
-            for (int i = 0; i < result.size(); i++)
-            {   
-                result[i] = result[i] - offset;
-            }
-            return result;
-        }
     };
     FreePolygon2D *GetCircle(float radius = 1.0, int resolution = 16)
     {

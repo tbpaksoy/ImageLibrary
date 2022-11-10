@@ -165,7 +165,7 @@ namespace TahsinsLibrary.Geometry
 
             return detereminant == 0 ? new(float.NaN, float.NaN) : new Vector2D(b2 * c1 - b1 * c2, a1 * c2 - a2 * c1) / detereminant;
         }
-        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs(x - point.x * y - point.y));
+        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs((x - point.x) * (y - point.y)));
         public static Vector2D Center(params Vector2D[] vectors)
         {
             Vector2D center = new Vector2D();
@@ -241,6 +241,8 @@ namespace TahsinsLibrary.Geometry
             return a + (b - a) * t;
         }
         public static Vector2D QuadraticInterpolate(Vector2D a, Vector2D b, Vector2D c, float t) => Interpolate(Interpolate(a, b, t), Interpolate(b, c, t), t);
+        public static float GetAngle(Vector2D a, Vector2D b) => (float)Math.Atan2(b.y - a.y, b.x - a.x);
+
     }
     public abstract class Shape2D : ITransform
     {
@@ -623,43 +625,10 @@ namespace TahsinsLibrary.Geometry
             Console.WriteLine("Triangulation Process Ended");
             return triangles.ToArray();
         }
-        public void SortVertices()
+        public void OrderVertices()
         {
-            Console.WriteLine("Sorting Process Began");
-            Vector2D center = centroid;
-            Vector2D[] vertices = new Vector2D[this.vertices.Length];
-            (float, int)[] temp = new (float, int)[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                Vector2D v = this.vertices[i] - center;
-                temp[i] = (MathF.Atan2(v.y, v.x), i);
-            }
-            Random random = new Random();
-            for (int i = temp.Length - 1; i > 0; i--)
-            {
-                int index1 = random.Next(0, temp.Length), index2 = random.Next(0, temp.Length);
-                (float, int) tmp = temp[index1];
-                temp[index1] = temp[index2];
-                temp[index2] = tmp;
-            }
-            for (int i = 0; i < temp.Length; i++)
-            {
-                for (int j = i + 1; j < temp.Length; j++)
-                {
-                    if (temp[i].Item1 < temp[j].Item1)
-                    {
-                        (float, int) tmp = temp[i];
-                        temp[i] = temp[j];
-                        temp[j] = tmp;
-                    }
-                }
-            }
-            for (int i = 0; i < temp.Length; i++)
-            {
-                vertices[i] = this.vertices[temp[i].Item2];
-            }
-            this.vertices = vertices;
-            Console.WriteLine("Sorting Process Ended");
+            Vector2D center = Vector2D.Center(vertices);
+            vertices = vertices.OrderBy(v => Vector2D.GetAngle(center, v)).ToArray();
         }
         public Vector2D[] GetPointsInside()
         {
@@ -835,7 +804,6 @@ namespace TahsinsLibrary.Geometry
 
             return result.ToArray();
         }
-
         public Vector2D[] Rotate()
         {
             return new Vector2D[]
@@ -844,7 +812,6 @@ namespace TahsinsLibrary.Geometry
                 new(to.x * MathF.Cos(rotation) - to.y * MathF.Sin(rotation), to.x * MathF.Sin(rotation) + to.y * MathF.Cos(rotation))
             };
         }
-
         public Vector2D[] Rotate(float rotation)
         {
             return new Vector2D[]
@@ -853,9 +820,7 @@ namespace TahsinsLibrary.Geometry
                 new(to.x * MathF.Cos(rotation) - to.y * MathF.Sin(rotation),to.x * MathF.Sin(rotation) + to.y * MathF.Cos(rotation))
             };
         }
-
         public Vector2D[] Rotate(Vector2D[] vertices) => IRotate.Rotate(vertices, rotation);
-
         public Vector2D[] Scale()
         {
             Vector2D[] result = new Vector2D[points.Length];

@@ -10,7 +10,8 @@ namespace TahsinsLibrary.Geography.Layers
         private Random random;
         public float minHeight, maxHeight;
         public int iterationCount;
-        public int minQuality, maxQuality;
+        public int minQuality, maxQuality, smoothQuality;
+        public bool smooth;
         private float minAssigned = int.MaxValue, maxAssigned = int.MinValue;
         public TopographicLayer(int width, int height, int permissionCount, int seed) : base(width, height, permissionCount)
         {
@@ -48,6 +49,7 @@ namespace TahsinsLibrary.Geography.Layers
                 Console.WriteLine(value);
                 minAssigned = MathF.Min(minAssigned, value);
                 maxAssigned = MathF.Max(maxAssigned, value);
+                if (smooth) polygon = polygon.GetSmoothVersion(smoothQuality);
                 foreach (Vector2D point in polygon.GetPointsInside())
                 {
                     if (permission[point.pointX, point.pointY] > 0)

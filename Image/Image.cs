@@ -213,19 +213,49 @@ namespace TahsinsLibrary
             if (hex.Length == 8) color.hex = hex;
             return color;
         }
+        public static Color Interpolate(Color from, Color to, float t)
+        {
+            int r = (int)(from.r + (from.r - to.r) * t);
+            int g = (int)(from.g + (from.g - to.g) * t);
+            int b = (int)(from.b + (from.b - to.b) * t);
+            int a = (int)(from.a + (from.a - to.a) * t);
+            return new Color(r, g, b, a);
+        }
+        public static Color Mix(params Color[] colors)
+        {
+            int r, g, b, a;
+            r = g = b = a = 0;
+            foreach (Color color in colors)
+            {
+                r += color.r;
+                g += color.g;
+                b += color.b;
+                a += color.a;
+            }
+            r /= colors.Length;
+            g /= colors.Length;
+            b /= colors.Length;
+            a /= colors.Length;
+            return new Color(r, g, b, a);
+        }
+        public static Color Mix(Color from, Color to, float value = 0.5f) => new Color(
+            from.r + (int)((from.r - to.r) * value),
+            from.g + (int)((from.g - to.g) * value),
+            from.b + (int)((from.b - to.b) * value),
+            from.a + (int)((from.a - to.a) * value));
     }
-    public struct ColorRange
+    public struct CustomColorSpace
     {
-        public Color color
-        {
-            get; private set;
-        }
-        public float range;
-        public ColorRange(Color color, float range)
-        {
-            this.color = color;
-            this.range = range;
-        }
+        public Color from, to;
+        public int rRange => to.r - from.r;
+        public int gRange => to.g - from.g;
+        public int bRange => to.b - from.b;
+        public int aRange => to.a - from.a;
+        public Color MoveTrough(float value = 0.5f) => new Color(
+        (byte)(from.r + rRange * value),
+        (byte)(from.g + gRange * value),
+        (byte)(from.b + bRange * value),
+        (byte)(from.a + aRange * value));
     }
     public struct MaterialForUnity : IExportable
     {
@@ -343,7 +373,7 @@ namespace TahsinsLibrary
         }
     }
 
-    public static class Image
+    public sealed class Image
     {
 
         public static class BMP
@@ -913,5 +943,66 @@ namespace TahsinsLibrary
             }
             return colorData;
         }
+        public enum Format
+        {
+            BMP, PNG
+        }
+        public string name, relativePath = null;
+        public Color[,] colorData = null;
+        public Format format;
+        public int x => colorData == null ? 0 : colorData.GetLength(0);
+        public int y => colorData == null ? 0 : colorData.GetLength(1);
+
+    }
+    public sealed class Mask
+    {
+        public int width => data.GetLength(0);
+        public int height => data.GetLength(1);
+        private bool[,] data;
+        public bool this[int w, int h]
+        {
+            set
+            {
+                data[w, h] = value;
+            }
+            get
+            {
+                return data[w, h];
+            }
+        }
+        public Mask(int x = 1, int y = 1)
+        {
+            data = new bool[x, y];
+        }
+        public void Insert(int x, int y)
+        {
+            data[x, y] = true;
+        }
+        public static Mask Union(Mask a, Mask b)
+        {
+            Mask mask = new Mask((int)MathF.Min(a.width, b.width), (int)MathF.Min(a.height, b.height));
+            for (int i = 0; i < mask.width; i++)
+            {
+                for (int j = 0; j < mask.height; j++)
+                {
+                    mask[i, j] = a[i, j] || b[i, j];
+                }
+            }
+            return mask;
+        }
+        public static Mask Intersect(Mask a, Mask b)
+        {
+            Mask mask = new Mask((int)MathF.Min(a.width, b.width), (int)MathF.Min(a.height, b.height));
+            for (int i = 0; i < mask.width; i++)
+            {
+                for (int j = 0; j < mask.height; j++)
+                {
+                    mask[i, j] = a[i, j] && b[i, j];
+                }
+            }
+            return mask;
+        }
+        public Mask Union(Mask mask) => Union(this, mask);
+        public Mask Intersect(Mask mask) => Intersect(this, mask);
     }
 }
