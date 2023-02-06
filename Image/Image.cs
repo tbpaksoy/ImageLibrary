@@ -66,6 +66,14 @@ namespace TahsinsLibrary
                 return new Color(value, value, value, a);
             }
         }
+        [JsonIgnore]
+        public Color rMask => this with { g = b = this.r, a = 255 };
+        [JsonIgnore]
+        public Color gMask => this with { r = b = this.g, a = 255 };
+        [JsonIgnore]
+        public Color bMask => this with { r = g = this.b, a = 255 };
+        [JsonIgnore]
+        public Color aMask => this with { r = g = b = this.a, a = 255 };
         public Color(string hex)
         {
             r = g = b = a = 0;
@@ -105,10 +113,10 @@ namespace TahsinsLibrary
         }
         public Color(int r, int g, int b, int a)
         {
-            this.r = (byte)r;
-            this.g = (byte)g;
-            this.b = (byte)b;
-            this.a = (byte)a;
+            this.r = (byte)MathF.Max(MathF.Min(r, 255), 0);
+            this.g = (byte)MathF.Max(MathF.Min(g, 255), 0);
+            this.b = (byte)MathF.Max(MathF.Min(b, 255), 0);
+            this.a = (byte)MathF.Max(MathF.Min(a, 255), 0);
         }
         public Color(int r, int g, int b)
         {
@@ -243,6 +251,8 @@ namespace TahsinsLibrary
             from.g + (int)((from.g - to.g) * value),
             from.b + (int)((from.b - to.b) * value),
             from.a + (int)((from.a - to.a) * value));
+        public static Color operator *(Color c, float v) => new Color((int)(c.r * v), (int)(c.g * v), (int)(c.b * v), c.a);
+        public static Color operator +(Color c, int v) => new Color(c.r + v, c.g + v, c.b + v, c.a);
     }
     public struct CustomColorSpace
     {
@@ -257,122 +267,6 @@ namespace TahsinsLibrary
         (byte)(from.b + bRange * value),
         (byte)(from.a + aRange * value));
     }
-    public struct MaterialForUnity : IExportable
-    {
-        public string name { get; set; }
-        public Color[,] albedo;
-        public byte[,] metallic;
-        public byte[,] smoothness;
-        public Color[,] emission;
-        public int paletteSize;
-        public MaterialForUnity(string name, Color[,] albedo, byte[,] metallic, byte[,] smoothness, Color[,] emission, int paletteSize)
-        {
-            this.name = name;
-            this.albedo = albedo;
-            this.metallic = metallic;
-            this.smoothness = smoothness;
-            this.emission = emission;
-            this.paletteSize = paletteSize;
-        }
-        public void Export(string path, string name)
-        {
-            if (!IsReadyToExport()) return;
-            if (File.Exists($"{path}\\{name}Albedo.bmp") || File.Exists($"{path}\\{name}Metallic.bmp") || File.Exists($"{path}\\{name}Smoothness.bmp")
-            || File.Exists($"{path}\\{name}Emission.bmp")
-            ) return;
-            int decised = (int)MathF.Ceiling(MathF.Sqrt(albedo.Length));
-            FileStream fs = new FileStream($"{path}\\{name}Albedo.bmp", FileMode.Create);
-            byte[] data = Image.BMP.GetPaletteData(albedo, paletteSize, paletteSize);
-            fs.Write(data);
-            fs.Flush();
-            fs.Close();
-            fs = new FileStream($"{path}\\{name}Metallic.bmp", FileMode.Create);
-            data = Image.BMP.GetPaletteData(Image.ToGreyScale(metallic), paletteSize, paletteSize);
-            fs.Write(data);
-            fs.Flush();
-            fs.Close();
-            fs = new FileStream($"{path}\\{name}Smoothness.bmp", FileMode.Create);
-            data = Image.BMP.GetPaletteData(Image.ToGreyScale(smoothness), paletteSize, paletteSize);
-            fs.Write(data);
-            fs.Flush();
-            fs.Close();
-            fs = new FileStream($"{path}\\{name}Emission.bmp", FileMode.Create);
-            data = Image.BMP.GetPaletteData(emission, paletteSize, paletteSize);
-            fs.Write(data);
-            fs.Flush();
-            fs.Close();
-        }
-        public bool IsReadyToExport()
-        {
-            int[] lenghts = { albedo.Length, metallic.Length, smoothness.Length, emission.Length };
-            for (int i = 1; i < lenghts.Length; i++)
-            {
-                if (lenghts[i] != lenghts[i - 1]) return false;
-            }
-            if (paletteSize < 1) return false;
-            return true;
-        }
-    }
-    public struct MaterialForBlender : IExportable
-    {
-        public string name { get; set; }
-        public Color[,] baseColor;
-        public byte[,] metallic;
-        public byte[,] specular;
-        public byte[,] roughness;
-        public Color[,] emission;
-        public int paletteSize;
-        public bool IsReadyToExport()
-        {
-            if (paletteSize < 1) return false;
-            return true;
-        }
-        public void Export(string path, string name)
-        {
-            if (!IsReadyToExport()) return;
-            if (File.Exists($"{path}\\{name}BaseColor.bmp") || File.Exists($"{path}\\{name}Metallic.bmp") || File.Exists($"{path}\\{name}Roughness.bmp")
-            || File.Exists($"{path}\\{name}Emission.bmp")
-            ) return;
-            int decised = (int)MathF.Ceiling(MathF.Sqrt(Compare.Max(
-            baseColor == null ? 0 : baseColor.Length,
-            metallic == null ? 0 : metallic.Length,
-            roughness == null ? 0 : roughness.Length,
-            emission == null ? 0 : emission.Length)));
-            if (baseColor != null)
-            {
-                FileStream fs = new FileStream($"{path}\\{name}BaseColor.bmp", FileMode.Create);
-                byte[] data = Image.BMP.GetPaletteData(baseColor);
-                fs.Write(data);
-                fs.Flush();
-                fs.Close();
-            }
-            if (metallic != null)
-            {
-                FileStream fs = new FileStream($"{path}\\{name}Metallic.bmp", FileMode.Create);
-                byte[] data = Image.BMP.GetPaletteData(Image.ToGreyScale(metallic));
-                fs.Write(data);
-                fs.Flush();
-                fs.Close();
-            }
-            if (roughness != null)
-            {
-                FileStream fs = new FileStream($"{path}\\{name}Roughness.bmp", FileMode.Create);
-                byte[] data = Image.BMP.GetPaletteData(Image.ToGreyScale(roughness));
-                fs.Write(data);
-                fs.Flush();
-                fs.Close();
-            }
-            if (emission != null)
-            {
-                FileStream fs = new FileStream($"{path}\\{name}Emission.bmp", FileMode.Create);
-                byte[] data = Image.BMP.GetPaletteData(emission);
-                fs.Write(data);
-                fs.Flush();
-                fs.Close();
-            }
-        }
-    }
-
     public sealed class Image
     {
 
@@ -451,7 +345,7 @@ namespace TahsinsLibrary
             public static byte[] GetColorMatrix(Color[,] resource)
             {
                 List<byte> data = new List<byte>();
-                int padding = resource.GetLength(0) * 3 % 4;
+                int padding = resource.GetLength(0) % 4;
                 for (int i = 0; i < resource.GetLength(0); i++)
                 {
                     for (int j = 0; j < resource.GetLength(1); j++)
@@ -595,180 +489,6 @@ namespace TahsinsLibrary
                 return data.ToArray();
             }
             #endregion
-        }
-        public static class PNG
-        {
-            public static List<string> AnalyzeIDATHex(string filePath)
-            {
-                if (filePath == null || !filePath.EndsWith(".png") || !File.Exists(filePath)) return null;
-                List<string> idat = new List<string>();
-                byte[] data = File.ReadAllBytes(filePath);
-                for (int i = 4; i < data.Length - 4; i++)
-                {
-                    if (data[i] == (byte)'I' && data[i + 1] == (byte)'D' && data[i + 2] == (byte)'A' && data[i + 3] == (byte)'T')
-                    {
-                        string temp = null;
-                        for (int j = i - 4; j < i; j++)
-                        {
-                            temp += data[j].ToString("X2");
-                        }
-                        int chunkLength = int.Parse(temp, NumberStyles.HexNumber);
-                        Console.WriteLine(temp);
-                        Console.WriteLine(chunkLength);
-                        for (int j = i - 4; j < i + chunkLength + 4; j++)
-                        {
-                            idat.Add(data[j].ToString("X2"));
-                        }
-                        break;
-                    }
-                }
-                return idat;
-            }
-            public static List<byte> AnalyzeIDATByte(string filePath)
-            {
-                if (filePath == null || !filePath.EndsWith(".png") || !File.Exists(filePath)) return null;
-                List<byte> idat = new List<byte>();
-                byte[] data = File.ReadAllBytes(filePath);
-                for (int i = 4; i < data.Length - 4; i++)
-                {
-                    if (data[i] == (byte)'I' && data[i + 1] == (byte)'D' && data[i + 2] == (byte)'A' && data[i + 3] == (byte)'T')
-                    {
-                        string temp = null;
-                        for (int j = i - 4; j < i; j++)
-                        {
-                            temp += data[j].ToString("X2");
-                        }
-                        int chunkLength = int.Parse(temp, NumberStyles.HexNumber);
-                        Console.WriteLine(temp);
-                        Console.WriteLine(chunkLength);
-                        for (int j = i - 4; j < i + chunkLength + 4; j++)
-                        {
-                            idat.Add(data[j]);
-                        }
-                        break;
-                    }
-                }
-                return idat;
-            }
-            public enum ColorType
-            {
-                Grayscale = 0, TrueColor = 2, Indexed = 3, GrayscaleAndAlpha = 4, TrueColorAndAlpha = 6
-            }
-            public static string[] CreatePNGHeader()
-            {
-                List<string> data = new List<string>();
-                CustomCalculation.Length = 2;
-                data.Add("89");
-                foreach (char c in "PNG")
-                {
-                    data.Add(CustomCalculation.GetHex(c));
-                }
-                data.Add("0D");
-                data.Add("0A");
-                data.Add("1A");
-                data.Add("0A");
-                return data.ToArray();
-            }
-            public static string[] CreateIHDRChunk(int width, int height, int bitDepth, ColorType colorType = ColorType.TrueColorAndAlpha, bool interlaced = false)
-            {
-                if (!CheckColorFormat(bitDepth * GetColorChannels(colorType), colorType))
-                {
-                    throw new Exception("Color format not supported.");
-                }
-                List<string> data = new List<string>();
-                CustomCalculation.Length = 8;
-                foreach (string s in CustomString.Group(CustomCalculation.GetHex(13), 2))
-                {
-                    data.Add(s);
-                }
-                CustomCalculation.Length = 2;
-                foreach (char c in "IHDR")
-                {
-                    data.Add(CustomCalculation.GetHex(c));
-                }
-                CustomCalculation.Length = 8;
-                foreach (string s in CustomString.Group(CustomCalculation.GetHex(width), 2))
-                {
-                    data.Add(s);
-                }
-                foreach (string s in CustomString.Group(CustomCalculation.GetHex(height), 2))
-                {
-                    data.Add(s);
-                }
-                CustomCalculation.Length = 2;
-                data.Add(CustomCalculation.GetHex(bitDepth));
-                data.Add(CustomCalculation.GetHex(GetColorTypeIndex(colorType)));
-                data.Add(CustomCalculation.GetHex(0));
-                data.Add(CustomCalculation.GetHex(0));
-                data.Add(CustomCalculation.GetHex(interlaced ? 1 : 0));
-                data.Add("90");
-                data.Add("77");
-                data.Add("53");
-                data.Add("DE");
-                return data.ToArray();
-            }
-            public static int GetColorTypeIndex(ColorType colorType)
-            {
-                switch (colorType)
-                {
-                    case ColorType.Grayscale: return 0;
-                    case ColorType.TrueColor: return 2;
-                    case ColorType.Indexed: return 3;
-                    case ColorType.GrayscaleAndAlpha: return 4;
-                    case ColorType.TrueColorAndAlpha: return 6;
-                }
-                throw new Exception();
-            }
-            public static int GetColorChannels(ColorType colorType)
-            {
-                switch (colorType)
-                {
-                    case ColorType.Grayscale: return 1;
-                    case ColorType.GrayscaleAndAlpha: return 2;
-                    case ColorType.Indexed: return 1;
-                    case ColorType.TrueColor: return 3;
-                    case ColorType.TrueColorAndAlpha: return 4;
-                }
-                return 0;
-            }
-            public static bool CheckColorFormat(int bitsPerChannel, ColorType colorType)
-            {
-                switch (colorType)
-                {
-                    case ColorType.Indexed:
-                        if (bitsPerChannel == 1 || bitsPerChannel == 2 || bitsPerChannel == 4 || bitsPerChannel == 8)
-                        {
-                            return true;
-                        }
-                        break;
-                    case ColorType.Grayscale:
-                        if (bitsPerChannel == 1 || bitsPerChannel == 2 || bitsPerChannel == 4 || bitsPerChannel == 8 || bitsPerChannel == 16)
-                        {
-                            return true;
-                        }
-                        break;
-                    case ColorType.GrayscaleAndAlpha:
-                        if (bitsPerChannel == 32 || bitsPerChannel == 16)
-                        {
-                            return true;
-                        }
-                        break;
-                    case ColorType.TrueColor:
-                        if (bitsPerChannel == 24 || bitsPerChannel == 48)
-                        {
-                            return true;
-                        }
-                        break;
-                    case ColorType.TrueColorAndAlpha:
-                        if (bitsPerChannel == 32 || bitsPerChannel == 64)
-                        {
-                            return true;
-                        }
-                        break;
-                }
-                return false;
-            }
-
         }
         public static Color[] GenerateColorArray(int width, int height, Func<byte, Color> Formula)
         {
@@ -943,6 +663,81 @@ namespace TahsinsLibrary
             }
             return colorData;
         }
+        public static Color[,] MirrorVertical(Color[,] source)
+        {
+            Color[,] result = new Color[source.GetLength(0), source.GetLength(1)];
+            for (int i = 0; i < result.GetLength(0); i++)
+            {
+                for (int j = 0; j < result.GetLength(1); j++)
+                {
+                    result[i, j] = source[i, result.GetLength(1) - j - 1];
+                }
+            }
+            return result;
+        }
+        public static Color[,] Subversion(Color[,] source)
+        {
+            Color[,] result = new Color[source.GetLength(1), source.GetLength(0)];
+            for (int i = 0; i < result.GetLength(0); i++)
+            {
+                for (int j = 0; j < result.GetLength(1); j++)
+                {
+                    result[i, j] = source[j, i];
+                }
+            }
+            return result;
+        }
+        public static Color[,] Contrast(Color[,] source, float value)
+        {
+            Color[,] result = source.Clone() as Color[,];
+            for (int i = 0; i < result.GetLength(0); i++)
+            {
+                for (int j = 0; j < result.GetLength(1); j++)
+                {
+                    result[i, j] *= value;
+                }
+            }
+            return result;
+        }
+        public static Color[,] Brightness(Color[,] source, int value)
+        {
+            Color[,] result = source.Clone() as Color[,];
+            for (int i = 0; i < result.GetLength(0); i++)
+            {
+                for (int j = 0; j < result.GetLength(1); j++)
+                {
+                    result[i, j] += value;
+                }
+            }
+            return result;
+        }
+        public static Color[,] Threshold(Color[,] source, Color threshold)
+        {
+            Color w = new Color(255, 255, 255, 255), b = new Color(0, 0, 0, 255);
+            Color[,] result = new Color[source.GetLength(0), source.GetLength(1)];
+            for (int i = 0; i < result.GetLength(0); i++)
+            {
+                for (int j = 0; j < result.GetLength(1); j++)
+                {
+                    Color temp = source[i, j];
+                    result[i, j] = (temp.r >= threshold.r && temp.g >= threshold.g && temp.b >= threshold.b && temp.a >= threshold.a) ? w : b;
+                }
+            }
+            return result;
+        }
+        public static Color[,] OvalStripes(int x, int y, float frequency = 1f)
+        {
+            Color[,] result = new Color[x, y];
+            for (int i = 0; i < x; i++)
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    int temp = (int)MathF.Abs((MathF.Sin(MathF.Sqrt(MathF.Pow(i - 0.5f, 2) + MathF.Pow(j - 0.5f, 2)))) * 255);
+                    result[i, j] = new Color(temp, temp, temp, 255);
+                }
+            }
+            return result;
+        }
         public enum Format
         {
             BMP, PNG
@@ -953,56 +748,5 @@ namespace TahsinsLibrary
         public int x => colorData == null ? 0 : colorData.GetLength(0);
         public int y => colorData == null ? 0 : colorData.GetLength(1);
 
-    }
-    public sealed class Mask
-    {
-        public int width => data.GetLength(0);
-        public int height => data.GetLength(1);
-        private bool[,] data;
-        public bool this[int w, int h]
-        {
-            set
-            {
-                data[w, h] = value;
-            }
-            get
-            {
-                return data[w, h];
-            }
-        }
-        public Mask(int x = 1, int y = 1)
-        {
-            data = new bool[x, y];
-        }
-        public void Insert(int x, int y)
-        {
-            data[x, y] = true;
-        }
-        public static Mask Union(Mask a, Mask b)
-        {
-            Mask mask = new Mask((int)MathF.Min(a.width, b.width), (int)MathF.Min(a.height, b.height));
-            for (int i = 0; i < mask.width; i++)
-            {
-                for (int j = 0; j < mask.height; j++)
-                {
-                    mask[i, j] = a[i, j] || b[i, j];
-                }
-            }
-            return mask;
-        }
-        public static Mask Intersect(Mask a, Mask b)
-        {
-            Mask mask = new Mask((int)MathF.Min(a.width, b.width), (int)MathF.Min(a.height, b.height));
-            for (int i = 0; i < mask.width; i++)
-            {
-                for (int j = 0; j < mask.height; j++)
-                {
-                    mask[i, j] = a[i, j] && b[i, j];
-                }
-            }
-            return mask;
-        }
-        public Mask Union(Mask mask) => Union(this, mask);
-        public Mask Intersect(Mask mask) => Intersect(this, mask);
     }
 }

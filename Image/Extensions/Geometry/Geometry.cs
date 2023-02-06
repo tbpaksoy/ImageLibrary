@@ -126,44 +126,14 @@ namespace TahsinsLibrary.Geometry
             return $"Vector2D ({x},{y})";
         }
         public static bool OnSegment(Vector2D p, Vector2D q, Vector2D r) => q.x <= MathF.Max(p.x, r.x) && q.x >= MathF.Min(p.x, r.x) && q.y <= MathF.Max(p.y, r.y) && q.y >= MathF.Min(p.y, r.y);
-        public static Orientation GetOrientation(Vector2D p, Vector2D q, Vector2D r)
+        public static Orientation GetOrientation(Vector2D p1, Vector2D p2, Vector2D p3)
         {
-            float value = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-            return value == 0 ? Orientation.CoLinear : value > 0 ? Orientation.ClockWise : Orientation.CounterClockWise;
-        }
-        public static bool Intersecting(Vector2D p1, Vector2D q1, Vector2D p2, Vector2D q2)
-        {
-            Orientation o1 = GetOrientation(p1, q1, p2);
-            Orientation o2 = GetOrientation(p1, q1, q2);
-            Orientation o3 = GetOrientation(p2, q2, p1);
-            Orientation o4 = GetOrientation(p2, q2, q1);
-            if (o1 != o2 && o3 != o4) return true;
-            if (o1 == Orientation.CoLinear && OnSegment(p1, p2, q1)) return true;
-            if (o2 == Orientation.CoLinear && OnSegment(p1, q2, q1)) return true;
-            if (o3 == Orientation.CoLinear && OnSegment(p2, p1, q2)) return true;
-            if (o4 == Orientation.CoLinear && OnSegment(p2, q1, q2)) return true;
-            return false;
-        }
-        public static bool Intersecting(Vector2D p1, Vector2D q1, Vector2D p2, Vector2D q2, out Vector2D intersectionPoint)
-        {
-            intersectionPoint = new Vector2D(float.NaN, float.NaN);
-            bool intersecting = Intersecting(p1, q1, p2, q2);
-            if (intersecting) intersectionPoint = GetIntersectionPoint(p1, q1, p2, q2);
-            return intersecting;
-        }
-        public static Vector2D GetIntersectionPoint(Vector2D p1, Vector2D q1, Vector2D p2, Vector2D q2)
-        {
-            float a1 = q1.y - q1.x;
-            float b1 = q1.x - q1.x;
-            float c1 = a1 * q1.x + b1 * q1.y;
-
-            float a2 = q2.y - p2.y;
-            float b2 = p2.x - q2.x;
-            float c2 = a2 * p2.x + b2 * p2.y;
-
-            float detereminant = a1 * b2 - a2 * b1;
-
-            return detereminant == 0 ? new(float.NaN, float.NaN) : new Vector2D(b2 * c1 - b1 * c2, a1 * c2 - a2 * c1) / detereminant;
+            Console.WriteLine(p1);
+            Console.WriteLine(p2);
+            Console.WriteLine(p3);
+            Vector2D p12 = (p2 - p1), p23 = (p3 - p2);
+            float m1 = p12.y / p12.x, m2 = p23.y / p23.x;
+            return m1 == m2 ? Orientation.CoLinear : m1 > m2 ? Orientation.ClockWise : Orientation.CounterClockWise;
         }
         public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs((x - point.x) * (y - point.y)));
         public static Vector2D Center(params Vector2D[] vectors)
@@ -242,7 +212,41 @@ namespace TahsinsLibrary.Geometry
         }
         public static Vector2D QuadraticInterpolate(Vector2D a, Vector2D b, Vector2D c, float t) => Interpolate(Interpolate(a, b, t), Interpolate(b, c, t), t);
         public static float GetAngle(Vector2D a, Vector2D b) => (float)Math.Atan2(b.y - a.y, b.x - a.x);
-
+        public static bool IsIntersecting(Vector2D p1, Vector2D p2, Vector2D p3, Vector2D p4)
+        {
+            float de = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+            if (de == 0) return false;
+            float x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) / de;
+            float y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) / de;
+            Vector2D temp = new Vector2D(x, y);
+            float a = p1.Distance(temp) + temp.Distance(p2);
+            float b = p1.Distance(p2);
+            float c = p3.Distance(temp) + temp.Distance(p4);
+            float d = p3.Distance(p4);
+            a -= a % 0.001f;
+            b -= b % 0.001f;
+            c -= c % 0.001f;
+            d -= d % 0.001f;
+            return a == b && c == d;
+        }
+        public static bool IsIntersecting(Vector2D p1, Vector2D p2, Vector2D p3, Vector2D p4, out Vector2D v)
+        {
+            v = new Vector2D();
+            float de = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+            if (de == 0) return false;
+            float x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) / de;
+            float y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) / de;
+            Vector2D temp = v = new Vector2D(x, y);
+            float a = p1.Distance(temp) + temp.Distance(p2);
+            float b = p1.Distance(p2);
+            float c = p3.Distance(temp) + temp.Distance(p4);
+            float d = p3.Distance(p4);
+            a -= a % 0.001f;
+            b -= b % 0.001f;
+            c -= c % 0.001f;
+            d -= d % 0.001f;
+            return a == b && c == d;
+        }
     }
     public abstract class Shape2D : ITransform
     {
@@ -658,10 +662,7 @@ namespace TahsinsLibrary.Geometry
             {
                 for (int j = i + 2; j < vertices.Length - 1; j++)
                 {
-                    if (Vector2D.Intersecting(vertices[i], vertices[i + 1], vertices[j], vertices[j + 1], out Vector2D point))
-                    {
-                        temp.Add(point);
-                    }
+
                 }
             }
             vertices = temp.ToArray();
@@ -726,6 +727,108 @@ namespace TahsinsLibrary.Geometry
 
         public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = Smooth(quality) };
     }
+    public class Circle2D : Shape2D
+    {
+        public int resolution;
+        public float radius;
+        public override float area => throw new NotImplementedException();
+        public override Vector2D[] points
+        {
+            get
+            {
+                Vector2D[] result = new Vector2D[resolution];
+                for (int i = 0; i < resolution; i++)
+                {
+                    float temp = MathF.PI * i / resolution * 2f;
+                    result[i] = new Vector2D(MathF.Cos(temp) * radius, MathF.Sin(temp) * radius);
+                }
+                return result;
+            }
+        }
+        public override Vector2D centroid
+        {
+            get
+            {
+                Vector2D result = new Vector2D();
+                foreach (Vector2D v in points)
+                {
+                    result += v;
+                }
+                result /= points.Length;
+                return result;
+            }
+        }
+        public override (float, float, float, float) GetSegment() => (-radius, radius, -radius, radius);
+
+        public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = points };
+
+        public override bool InSegment(Vector2D point) => point.x < radius && point.x > -radius && point.y < radius && point.y > -radius;
+
+        public override bool IsPointInside(Vector2D point) => MathF.Sqrt(point.x * point.x + point.y * point.y) < radius;
+
+        public override void Normalize()
+        {
+        }
+
+        public override Line2D[] ToLines()
+        {
+            List<Line2D> list = new List<Line2D>();
+            Vector2D[] points = this.points;
+            for (int i = 0; i < points.Length - 1; i++)
+            {
+                list.Add(new Line2D() { from = points[i], to = points[i + 1] });
+            }
+            list.Add(new Line2D() { from = points[0], to = points[^1] });
+            return list.ToArray();
+        }
+    }
+    public class ColorWheel : Circle2D
+    {
+        public Dictionary<int, Color> colorReferences = new Dictionary<int, Color>();
+        public Dictionary<Color, Vector2D[]> GetColorScheme()
+        {
+            if (colorReferences == null || colorReferences.Count < 2) return null;
+            Dictionary<Color, Vector2D[]> result = new Dictionary<Color, Vector2D[]>();
+            int[] indexes = colorReferences.Keys.ToArray();
+            System.Array.Sort(indexes);
+            Line2D[] lines = ToTransformedLines();
+            for (int i = 0; i < indexes.Length - 1; i++)
+            {
+                int interval = indexes[i] - indexes[i + 1];
+                for (int j = indexes[i]; j < indexes[i + 1]; j++)
+                {
+                    Color current = Color.Interpolate(colorReferences[indexes[i]], colorReferences[indexes[i + 1]], (float)(j) / interval);
+                    List<Vector2D> points = new List<Vector2D>();
+                    foreach (Vector2D v in lines[j].GetPoints())
+                    {
+                        points.Add(v);
+                    }
+                    result.Add(current, points.ToArray());
+                }
+            }
+            int temp = (int)MathF.Abs(resolution - indexes[0]);
+            for (int j = indexes[^1]; j < resolution; j++)
+            {
+                Color current = Color.Interpolate(colorReferences[indexes[0]], colorReferences[indexes[^1]], (float)(j) / temp);
+                List<Vector2D> points = new List<Vector2D>();
+                foreach (Vector2D v in lines[j].GetPoints())
+                {
+                    points.Add(v);
+                }
+                if (!result.ContainsKey(current))
+                    result.Add(current, points.ToArray());
+                else
+                {
+                    foreach (Vector2D v in result[current])
+                    {
+                        points.Add(v);
+                    }
+                    result[current] = points.ToArray();
+                }
+            }
+            return result;
+        }
+    }
     public sealed class Line2D : ITransform
     {
         public Vector2D from;
@@ -738,7 +841,12 @@ namespace TahsinsLibrary.Geometry
         public Vector2D[] points => new Vector2D[] { from, to };
 
         public Vector2D scale { get; set; }
-
+        public Line2D() { }
+        public Line2D(Vector2D from, Vector2D to)
+        {
+            this.from = from;
+            this.to = to;
+        }
         public Vector2D[] Translate()
         {
             return new Vector2D[] { from + offset, to + offset };
@@ -836,7 +944,6 @@ namespace TahsinsLibrary.Geometry
             }
             return result;
         }
-
         public Vector2D[] Scale(Vector2D scale)
         {
             Vector2D[] result = new Vector2D[points.Length];
@@ -852,7 +959,6 @@ namespace TahsinsLibrary.Geometry
             }
             return result;
         }
-
         public Vector2D[] Scale(Vector2D[] points)
         {
             Vector2D[] result = new Vector2D[points.Length];
@@ -868,6 +974,8 @@ namespace TahsinsLibrary.Geometry
             }
             return result;
         }
+        public bool IntersectingWith(Line2D line) => Vector2D.IsIntersecting(from, to, line.from, line.to);
+        public bool IntersectingWith(Line2D line, out Vector2D v) => Vector2D.IsIntersecting(from, to, line.from, line.to, out v);
     }
     public sealed class ShapeGroup
     {
@@ -1045,59 +1153,5 @@ namespace TahsinsLibrary.Geometry
             return segments.ToArray();
         }
         public (float, float, float, float) GetSegment() => Vector2D.GetSegment(GetSegments());
-    }
-    public static class GeometryUtility
-    {
-        public static void JustCut(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
-        {
-            List<Vector2D> intersectinPoints = new List<Vector2D>();
-            Vector2D[] polygonlPoints = useTranform ? polygon.GetTransformedPoints() : polygon.points;
-            Vector2D[] shapePoints = useTranform ? shape.GetTransformedPoints() : polygon.points;
-            List<Vector2D> appliedPoints = new List<Vector2D>();
-            foreach (Vector2D point in polygonlPoints)
-            {
-                if (!shape.IsPointInside(point)) appliedPoints.Add(point);
-            }
-            foreach (Vector2D point in shapePoints)
-            {
-                if (polygon.IsPointInside(point)) appliedPoints.Add(point);
-            }
-
-        }
-        public static FreePolygon2D CutAndSnatch(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
-        {
-            throw new Exception();
-        }
-        public static FreePolygon2D CutSnatchAndUniteWithShape(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
-        {
-            throw new Exception();
-        }
-        public static void Add(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false)
-        {
-
-        }
-        public static FreePolygon2D GetCircle(float radius = 1f, int resolution = 16)
-        {
-            resolution = (int)MathF.Max(3, resolution);
-            Vector2D[] points = new Vector2D[resolution];
-            for (int i = 0; i < resolution; i++)
-            {
-                float angle = 2f * MathF.PI / (float)resolution * (float)(i);
-                points[i] = new Vector2D(MathF.Cos(angle), MathF.Sin(angle))
-                  * radius;
-            }
-            return new FreePolygon2D() { vertices = points };
-        }
-        public static void Intersect(ref FreePolygon2D polygon, Shape2D shape, bool useTranform = false) { }
-        public static Line2D[] BuildLinesFrom(Vector2D[] points)
-        {
-            Line2D[] lines = new Line2D[points.Length];
-            for (int i = 0; i < lines.Length - 1; i++)
-            {
-                lines[i] = new Line2D() { from = points[i], to = points[i + 1] };
-            }
-            lines[^1] = new Line2D() { from = points[0], to = points[^1] };
-            return lines;
-        }
     }
 }
