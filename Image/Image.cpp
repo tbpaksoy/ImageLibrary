@@ -396,7 +396,7 @@ namespace Tahsin
     std::vector<char> ToBMPColorCode(std::vector<std::vector<Color>> source)
     {
         std::vector<char> data;
-
+        int padding = source.size() % 4;
         for (std::vector<Color> v : source)
         {
             for (Color c : v)
@@ -405,7 +405,7 @@ namespace Tahsin
                 data.push_back(c.g);
                 data.push_back(c.r);
             }
-            while (data.size() % 4 != 0)
+            for (int i = 0; i < padding; i++)
             {
                 data.push_back(0);
             }
@@ -422,19 +422,4 @@ namespace Tahsin
             data.push_back(c);
         return data;
     }
-}
-
-int main()
-{
-    std::vector<Tahsin::Color> a{Tahsin::Color(32, 54, 182), Tahsin::Color(132, 254, 45), Tahsin::Color(48, 184, 189)};
-    std::vector<Tahsin::Color> b{Tahsin::Color(98, 177, 61), Tahsin::Color(23, 81, 7), Tahsin::Color(156, 221, 191)};
-    auto var0 = Tahsin::GenerateColorTransition(a, b, 5);
-    auto var1 = Tahsin::ScaleColorArray(var0, 10, 10);
-    Tahsin::ApplyContrast(var1, 0);
-    auto data = Tahsin::ToBMP(var1);
-    std::ofstream os;
-    os.open("test.bmp", std::ios::binary | std::ios::out);
-    os.write(data.data(), data.size());
-    os.close();
-    return 0;
 }

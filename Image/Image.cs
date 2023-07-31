@@ -267,7 +267,7 @@ namespace TahsinsLibrary
         (byte)(from.b + bRange * value),
         (byte)(from.a + aRange * value));
     }
-    public sealed class Image
+    public static class Image
     {
 
         public static class BMP
@@ -345,14 +345,14 @@ namespace TahsinsLibrary
             public static byte[] GetColorMatrix(Color[,] resource)
             {
                 List<byte> data = new List<byte>();
-                int padding = resource.GetLength(0) % 4;
-                for (int i = 0; i < resource.GetLength(0); i++)
+                int padding = resource.GetLength(0) * resource.GetLength(1) % 4;
+                for (int i = 0; i < resource.GetLength(1); i++)
                 {
-                    for (int j = 0; j < resource.GetLength(1); j++)
+                    for (int j = 0; j < resource.GetLength(0); j++)
                     {
-                        data.Add(resource[i, j].b);
-                        data.Add(resource[i, j].g);
-                        data.Add(resource[i, j].r);
+                        data.Add(resource[j, i].b);
+                        data.Add(resource[j, i].g);
+                        data.Add(resource[j, i].r);
                     }
                     for (int j = 0; j < padding; j++)
                     {
@@ -742,11 +742,22 @@ namespace TahsinsLibrary
         {
             BMP, PNG
         }
-        public string name, relativePath = null;
-        public Color[,] colorData = null;
-        public Format format;
-        public int x => colorData == null ? 0 : colorData.GetLength(0);
-        public int y => colorData == null ? 0 : colorData.GetLength(1);
-
+    }
+    public static class Filter
+    {
+        public static Color[,] AntiAliase(Color[,] picture, float scale)
+        {
+            Color[,] result = new Color[picture.GetLength(0), picture.GetLength(1)];
+            for (float i = 0.5f; i < result.GetLength(0) - 0.5f; i++)
+            {
+                for (float j = 0.5f; j < result.GetLength(1) - 0.5f; j++)
+                {
+                    int ri = (int)MathF.Round(i), rj = (int)MathF.Round(j);
+                    float percent = (1f - MathF.Abs(i - ri)) * (1f - MathF.Abs(j - rj));
+                    result[ri, rj] = picture[ri, rj] * percent;
+                }
+            }
+            return result;
+        }
     }
 }

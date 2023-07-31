@@ -1,6 +1,7 @@
 #include <vector>
 #include <tuple>
 #include <limits>
+#include <tuple>
 namespace Tahsin
 {
     const float pi = 22.0 / 7.0;
@@ -39,6 +40,8 @@ namespace Tahsin
         static Vector2D ToCenter(std::vector<Vector2D> resource);
         static Vector2D Interpolate(Vector2D a, Vector2D b, float t);
         static Vector2D QuadraticInterpolate(Vector2D a, Vector2D b, Vector2D c, float t);
+        static std::tuple<float, float, float, float> GetBoundingBox(std::vector<Vector2D> resources);
+        bool InBoundingBox(std::tuple<float,float,float,float> bb);
     };
     const Vector2D Vector2D::up = Vector2D(0, 1);
     const Vector2D Vector2D::down = Vector2D(0, -1);
@@ -83,9 +86,13 @@ namespace Tahsin
         virtual float GetArea() = 0;
         virtual std::vector<Vector2D> GetPoints() = 0;
         virtual Vector2D GetCentroid() = 0;
-        virtual std::tuple<float, float, float, float> GetSegment() = 0;
+        virtual std::tuple<float, float, float, float> GetBoundingBox() = 0;
         virtual bool IsPointInside(Vector2D point) = 0;
-        virtual bool InSegment(Vector2D point);
+        virtual bool InBoundingBox(Vector2D point);
+        void Normalize();
+        std::vector<Vector2D> Fit(int width, int height);
+        std::vector<Vector2D> Fit(int width, int height, bool keepRatio);
+        std::vector<Vector2D> Smooth(int quality);
     };
     class Line2D : public ITransform
     {
@@ -94,12 +101,21 @@ namespace Tahsin
         Line2D();
         Line2D(Vector2D from, Vector2D to);
         ~Line2D();
-        std::vector<Vector2D> GetPoints();
         Vector2D GetCentroid();
+        std::vector<Vector2D> GetPoints() override;
+        std::vector<Vector2D> ApplyTransform() override;
+        std::vector<Vector2D> GetTransformedPoints() override;
         std::vector<Vector2D> ApplyOffset() override;
         std::vector<Vector2D> ApplyOffset(Vector2D offset) override;
         std::vector<Vector2D> ApplyOffset(std::vector<Vector2D> points) override;
+        std::vector<Vector2D> Rotate() override;
+        std::vector<Vector2D> Rotate(float rotation) override;
+        std::vector<Vector2D> Rotate(std::vector<Vector2D> source) override;
+        std::vector<Vector2D> ApplyScale() override;
+        std::vector<Vector2D> ApplyScale(Vector2D scale) override;
+        std::vector<Vector2D> ApplyScale(std::vector<Vector2D> source) override;
         bool IntesectingWith(Line2D *line);
+        
     };
     class Triangle : public Shape2D
     {
@@ -119,11 +135,11 @@ namespace Tahsin
         std::vector<Vector2D> GetTransformedPoints() override;
         std::vector<Vector2D> Rotate() override;
         std::vector<Vector2D> Rotate(float rotation) override;
-        std::vector<Vector2D> Rotate(std::vector<Vector2D> vertices) override {}
+        std::vector<Vector2D> Rotate(std::vector<Vector2D> vertices) override;
         std::vector<Vector2D> ApplyOffset() override;
         std::vector<Vector2D> ApplyOffset(Vector2D offset);
-        std::vector<Vector2D> ApplyOffset(std::vector<Vector2D> offsets) override {}
-        std::tuple<float, float, float, float> GetSegment() override;
+        std::vector<Vector2D> ApplyOffset(std::vector<Vector2D> offsets) override;
+        std::tuple<float, float, float, float> GetBoundingBox() override;
         std::vector<Vector2D> ApplyScale();
         std::vector<Vector2D> ApplyScale(std::vector<Vector2D> vectors);
         std::vector<Vector2D> ApplyScale(Vector2D scale);
@@ -137,7 +153,7 @@ namespace Tahsin
         bool IsPointInside(Vector2D point) override;
         std::vector<Vector2D> GetPoints() override;
         Vector2D GetCentroid() override;
-        std::tuple<float, float, float, float> GetSegment() override;
+        std::tuple<float, float, float, float> GetBoundingBox() override;
         std::vector<Vector2D> ApplyOffset() override;
         std::vector<Vector2D> ApplyOffset(Vector2D offset) override;
         std::vector<Vector2D> ApplyOffset(std::vector<Vector2D> resource) override;
@@ -158,6 +174,6 @@ namespace Tahsin
 
     public:
         void AddElement(T *t);
-        
     };
+    std::vector<Line2D*> ToLines(Shape2D *shape);
 }

@@ -104,11 +104,101 @@ namespace Tahsin
     {
         return Interpolate(Interpolate(a, b, t), Interpolate(b, c, t), t);
     }
-    bool Shape2D::InSegment(Vector2D point)
+    std::tuple<float, float, float, float> Vector2D::GetBoundingBox(std::vector<Vector2D> resources)
     {
-        std::tuple<float, float, float, float> segment = GetSegment();
+        std::vector<float> x, y;
+        for (Vector2D v : resources)
+        {
+            x.push_back(v.GetX());
+            y.push_back(v.GetY());
+        }
+        float xMin = *std::min_element(x.begin(), x.end()), xMax = *std::max_element(x.begin(), x.end());
+        float yMin = *std::min_element(y.begin(), y.end()), yMax = *std::max_element(y.begin(), y.end());
+        return std::make_tuple(xMin, xMax, yMin, yMax);
+    }
+    bool Vector2D::InBoundingBox(std::tuple<float, float, float, float> bb)
+    {
+        return std::get<0>(bb) > x && x < std::get<1>(bb) && std::get<2>(bb) > y && y < std::get<3>(bb);
+    }
+    bool Shape2D::InBoundingBox(Vector2D point)
+    {
+        std::tuple<float, float, float, float> segment = GetBoundingBox();
         float x = point.GetX(), y = point.GetY();
         return !(x < std::get<0>(segment) || x > std::get<1>(segment) || y < std::get<2>(segment) || y > std::get<3>(segment));
+    }
+    std::vector<Vector2D> Shape2D::Fit(int width, int height)
+    {
+        width -= 1;
+        height -= 1;
+        std::tuple<float, float, float, float> bb = GetBoundingBox();
+        Vector2D scale = Vector2D(width / abs(std::get<1>(bb) - std::get<0>(bb)), std::get<3>(bb) - std::get<2>(bb));
+        std::vector<Vector2D> temp;
+        for (Vector2D v : GetPoints())
+        {
+            temp.push_back(Vector2D(v.GetX() * scale.GetX(), v.GetY() * scale.GetY()));
+        }
+        Vector2D center = Vector2D::Center(temp);
+        for (size_t i = 0; i < temp.size(); i++)
+        {
+            temp[i] = temp[i] - center;
+        }
+        bb = Vector2D::GetBoundingBox(temp);
+        Vector2D offset = Vector2D(std::get<0>(bb), std::get<2>(bb));
+        for (size_t i = 0; i < temp.size(); i++)
+        {
+            temp[i] = temp[i] - offset;
+        }
+        return temp;
+    }
+    std::vector<Vector2D> Shape2D::Fit(int width, int height, bool keepRatio)
+    {
+        if (keepRatio)
+        {
+            width -= 1;
+            height -= 1;
+            std::tuple<float, float, float, float> bb = GetBoundingBox();
+            float scale = std::min(width / std::abs(std::get<1>(bb) - std::get<0>(bb)), height / std::abs(std::get<3>(bb) - std::get<2>(bb)));
+            std::vector<Vector2D> temp;
+            for (Vector2D v : GetPoints())
+            {
+                temp.push_back(v * scale);
+            }
+            Vector2D center = Vector2D::Center(temp);
+            for (size_t i = 0; i < temp.size(); i++)
+            {
+                temp[i] = temp[i] - center;
+            }
+            bb = Vector2D::GetBoundingBox(temp);
+            Vector2D offset = Vector2D(std::get<0>(bb), std::get<2>(bb));
+            for (size_t i = 0; i < temp.size(); i++)
+            {
+                temp[i] = temp[i] - offset;
+            }
+            return temp;
+        }
+        else
+            return Fit(width, height);
+    }
+    std::vector<Vector2D> Shape2D::Smooth(int quality)
+    {
+        std::vector<Vector2D> points = GetPoints();
+        std::vector<Vector2D> temp;
+        for (size_t i = 0; i < quality; i++)
+        {
+            temp.push_back(Vector2D::QuadraticInterpolate((*points.end() + *points.begin()) / 2.0f, *points.begin(), (*points.begin() + points[1]), 1.0f / quality * i));
+        }
+        for (size_t i = 1; i < points.size(); i++)
+        {
+            for (size_t j = 1; j < quality; j++)
+            {
+                temp.push_back(Vector2D::QuadraticInterpolate((points[i - 1] + points[i]) / 2.0f, points[i], (points[i] + points[i + 1]) / 2.0f, 1.0f / quality * j));
+            }
+        }
+        for (size_t i = 0; i < quality + 1; i++)
+        {
+            temp.push_back(Vector2D::QuadraticInterpolate(points.end()[-2] + *points.end() / 2.0f, *points.end(), (*points.end() + *points.begin()), 1.0f / quality * i));
+        }
+        return temp;
     }
     Line2D::Line2D() {}
     Line2D::Line2D(Vector2D from, Vector2D to)
@@ -176,6 +266,14 @@ namespace Tahsin
         }
         return result;
     }
+    std::vector<Vector2D> Line2D::Rotate(){}
+    std::vector<Vector2D> Line2D::Rotate(float rotation){}
+    std::vector<Vector2D> Line2D::Rotate(std::vector<Vector2D> vertices){}
+    std::vector<Vector2D> Line2D::ApplyTransform(){}
+    std::vector<Vector2D> Line2D::GetTransformedPoints(){}
+    std::vector<Vector2D> Line2D::ApplyScale(){}
+    std::vector<Vector2D> Line2D::ApplyScale(Vector2D scale){}
+    std::vector<Vector2D> Line2D::ApplyScale(std::vector<Vector2D> vertices){}
     bool Line2D::IntesectingWith(Line2D *line)
     {
         return Vector2D::Intersecting(from, to, line->from, line->to);
@@ -218,7 +316,7 @@ namespace Tahsin
     }
     bool Triangle::IsPointInside(Vector2D point)
     {
-        if (!InSegment(point))
+        if (!InBoundingBox(point))
             return false;
         Vector2D a = pointA;
         Vector2D b = pointB;
@@ -272,6 +370,7 @@ namespace Tahsin
         result.push_back(Vector2D(c.GetX() * cosf(rotation) - c.GetY() * sinf(rotation), c.GetX() * sinf(rotation) + c.GetY() * cosf(rotation)));
         return result;
     }
+    std::vector<Vector2D> Triangle::Rotate(std::vector<Vector2D> vertices){}
     std::vector<Vector2D> Triangle::ApplyOffset()
     {
         std::vector<Vector2D> result;
@@ -288,7 +387,8 @@ namespace Tahsin
         result.push_back(pointC + offset);
         return result;
     }
-    std::tuple<float, float, float, float> Triangle::GetSegment()
+    std::vector<Vector2D> Triangle::ApplyOffset(std::vector<Vector2D> offsets){}
+    std::tuple<float, float, float, float> Triangle::GetBoundingBox()
     {
         std::vector<float> x;
         x.push_back(pointA.GetX());
@@ -367,8 +467,7 @@ namespace Tahsin
     }
     float FreePolygon2D::GetArea()
     {
-
-        float area = 0.0;
+        float area = 0.0f;
         std::vector<Triangle *> triangles = Triangulate();
         for (Triangle *trianlge : triangles)
         {
@@ -378,7 +477,7 @@ namespace Tahsin
     }
     bool FreePolygon2D::IsPointInside(Vector2D point)
     {
-        if (!InSegment(point))
+        if (!InBoundingBox(point))
             return false;
         std::vector<Triangle *> triangles = Triangulate();
         for (Triangle *triangle : triangles)
@@ -398,7 +497,7 @@ namespace Tahsin
     {
         return Vector2D::Center(vertices);
     }
-    std::tuple<float, float, float, float> FreePolygon2D::GetSegment()
+    std::tuple<float, float, float, float> FreePolygon2D::GetBoundingBox()
     {
         std::vector<float> x;
         std::vector<float> y;
@@ -517,6 +616,17 @@ namespace Tahsin
             float y = (v.GetY() - center.GetY()) * scale.GetY() + center.GetY();
             result.push_back(Vector2D(x, y));
         }
+        return result;
+    }
+    std::vector<Line2D *> ToLines(Shape2D *shape)
+    {
+        std::vector<Line2D *> result;
+        std::vector<Vector2D> points = shape->GetPoints();
+        for (size_t i = 0; i < points.size() - 1; i++)
+        {
+            result.push_back(new Line2D(points[i], points[i + 1]));
+        }
+        result.push_back(new Line2D(*points.end(), *points.begin()));
         return result;
     }
 }

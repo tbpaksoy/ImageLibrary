@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
-using TahsinsLibrary.Analyze;
 using System.Linq;
 namespace TahsinsLibrary.Geometry
 {
+    public enum SmoothType
+    {
+        Distance, Percentage
+    }
     public interface ITranslate
     {
         public Vector2D offset { get; set; }
@@ -125,7 +128,7 @@ namespace TahsinsLibrary.Geometry
         {
             return $"Vector2D ({x},{y})";
         }
-        public static bool OnSegment(Vector2D p, Vector2D q, Vector2D r) => q.x <= MathF.Max(p.x, r.x) && q.x >= MathF.Min(p.x, r.x) && q.y <= MathF.Max(p.y, r.y) && q.y >= MathF.Min(p.y, r.y);
+        public static bool InBoundingBox(Vector2D p, Vector2D q, Vector2D r) => q.x <= MathF.Max(p.x, r.x) && q.x >= MathF.Min(p.x, r.x) && q.y <= MathF.Max(p.y, r.y) && q.y >= MathF.Min(p.y, r.y);
         public static Orientation GetOrientation(Vector2D p1, Vector2D p2, Vector2D p3)
         {
             Console.WriteLine(p1);
@@ -135,7 +138,7 @@ namespace TahsinsLibrary.Geometry
             float m1 = p12.y / p12.x, m2 = p23.y / p23.x;
             return m1 == m2 ? Orientation.CoLinear : m1 > m2 ? Orientation.ClockWise : Orientation.CounterClockWise;
         }
-        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs((x - point.x) * (y - point.y)));
+        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs((x - point.x) + (y - point.y)));
         public static Vector2D Center(params Vector2D[] vectors)
         {
             Vector2D center = new Vector2D();
@@ -146,7 +149,7 @@ namespace TahsinsLibrary.Geometry
             center /= vectors.Length;
             return center;
         }
-        public static (float, float, float, float) GetSegment(params Vector2D[] resources)
+        public static (float, float, float, float) GetBoundingBox(params Vector2D[] resources)
         {
             float[] x = new float[resources.Length];
             float[] y = new float[resources.Length];
@@ -157,7 +160,7 @@ namespace TahsinsLibrary.Geometry
             }
             return (x.Min(), x.Max(), y.Min(), y.Max());
         }
-        public static (float, float, float, float) GetSegment(params Vector2D[][] resources)
+        public static (float, float, float, float) GetBoundingBox(params Vector2D[][] resources)
         {
             float xMin = float.MaxValue, xMax = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue;
             foreach (Vector2D[] vectors in resources)
@@ -177,28 +180,28 @@ namespace TahsinsLibrary.Geometry
             }
             return (xMin, xMax, yMin, yMax);
         }
-        public static (float, float, float, float) GetSegment(params (float, float, float, float)[] segments)
+        public static (float, float, float, float) GetBoundingBox(params (float, float, float, float)[] boundingBoxes)
         {
             float xMin, xMax, yMin, yMax;
             xMin = float.MaxValue;
             yMin = float.MaxValue;
             xMax = float.MinValue;
             yMax = float.MinValue;
-            foreach ((float, float, float, float) segment in segments)
+            foreach ((float, float, float, float) bb in boundingBoxes)
             {
-                if (xMin > segment.Item1) xMin = segment.Item1;
-                if (xMax < segment.Item2) xMax = segment.Item2;
-                if (yMin > segment.Item3) yMin = segment.Item3;
-                if (yMax < segment.Item4) yMax = segment.Item4;
+                if (xMin > bb.Item1) xMin = bb.Item1;
+                if (xMax < bb.Item2) xMax = bb.Item2;
+                if (yMin > bb.Item3) yMin = bb.Item3;
+                if (yMax < bb.Item4) yMax = bb.Item4;
             }
             return (xMin, xMax, yMin, yMax);
         }
         public static Vector2D ToCenter(int width, int height, params Vector2D[] resources)
         {
-            (float, float, float, float) segment = GetSegment(resources);
-            Vector2D centerOfSegment = new Vector2D(segment.Item2 - segment.Item1, segment.Item4 - segment.Item3) / 2f;
+            (float, float, float, float) bb = GetBoundingBox(resources);
+            Vector2D centerOfBB = new Vector2D(bb.Item2 - bb.Item1, bb.Item4 - bb.Item3) / 2f;
             Vector2D center = new Vector2D(width, height) / 2f;
-            return centerOfSegment - center;
+            return centerOfBB - center;
         }
         public bool AxisBiggerThan(float number)
         {
@@ -229,6 +232,10 @@ namespace TahsinsLibrary.Geometry
             d -= d % 0.001f;
             return a == b && c == d;
         }
+        public static bool IsLinked(Vector2D p1, Vector2D p2, Vector2D p3, Vector2D p4)
+        {
+            return p1.Equals(p2) || p1.Equals(p3) || p1.Equals(p4) || p2.Equals(p3) || p2.Equals(p4) || p3.Equals(p4);
+        }
         public static bool IsIntersecting(Vector2D p1, Vector2D p2, Vector2D p3, Vector2D p4, out Vector2D v)
         {
             v = new Vector2D();
@@ -246,6 +253,138 @@ namespace TahsinsLibrary.Geometry
             c -= c % 0.001f;
             d -= d % 0.001f;
             return a == b && c == d;
+        }
+        public static Vector2D[] Smooth(Vector2D a, Vector2D b, Vector2D c, SmoothType type, int quality, float value = 1f, bool clamp = false)
+        {
+            List<Vector2D> temp = new List<Vector2D>();
+            Vector2D alpha = default, beta = default;
+            float ab = a.Distance(b), bc = b.Distance(c);
+            Console.WriteLine(ab + " " + bc);
+            switch (type)
+            {
+                case SmoothType.Distance:
+                    float distance = MathF.Min(ab, bc);
+                    Console.WriteLine(distance);
+                    if (clamp) value = MathF.Min(distance / 2f, value);
+                    value = distance / value;
+                    Console.WriteLine(value);
+                    alpha = Interpolate(a, b, ab / value);
+                    beta = Interpolate(b, c, bc / value);
+                    break;
+                case SmoothType.Percentage:
+                    if (clamp) value = MathF.Min(0.5f, value);
+                    alpha = Interpolate(a, b, value);
+                    beta = Interpolate(b, c, value);
+                    break;
+            }
+            temp.Add(a);
+            temp.Add(alpha);
+            for (int i = 0; i < quality; i++)
+            {
+                temp.Add(QuadraticInterpolate(alpha, b, beta, (float)(i + 1) / (float)(quality + 1)));
+            }
+            temp.Add(beta);
+            temp.Add(c);
+            return temp.ToArray();
+        }
+        public static Vector2D[] GetCirclePoints(float r)
+        {
+            List<Vector2D> temp = new List<Vector2D>()
+            {
+                new Vector2D(r,0)
+            };
+            for (int i = 0; i < r; i++)
+            {
+                Vector2D last = temp[^1];
+                float x = MathF.Sqrt(last.x * last.x - 2 * last.y - 1);
+                float y = last.y + 1f;
+                temp.Add(new Vector2D(x, y));
+            }
+            int count = temp.Count;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2D v = temp[i];
+                temp.Add(new Vector2D(-v.x, v.y));
+                temp.Add(new Vector2D(v.x, -v.y));
+                temp.Add(new Vector2D(-v.x, -v.y));
+                temp.Add(new Vector2D(v.y, -v.x));
+                temp.Add(new Vector2D(-v.y, v.x));
+                temp.Add(new Vector2D(v.y, v.x));
+                temp.Add(new Vector2D(-v.y, -v.x));
+            }
+            temp.OrderBy(v => Vector2D.GetAngle(default, v));
+            return temp.ToArray();
+        }
+        public static Vector2D[] GetCirclePoints(float r, out Vector2D[] filled)
+        {
+            List<Vector2D> temp = new List<Vector2D>()
+            {
+                new Vector2D(r,0)
+            };
+            List<Vector2D> _filled = new List<Vector2D>();
+            for (int i = 0; i < r; i++)
+            {
+                Vector2D last = temp[^1];
+                float x = MathF.Sqrt(last.x * last.x - 2 * last.y - 1);
+                float y = last.y + 1f;
+                temp.Add(new Vector2D(x, y));
+
+            }
+            temp = temp.Select(v => v).Distinct().ToList();
+            int count = temp.Count;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2D v = temp[i];
+                temp.Add(new Vector2D(-v.x, v.y));
+                temp.Add(new Vector2D(v.x, -v.y));
+                temp.Add(new Vector2D(-v.x, -v.y));
+                temp.Add(new Vector2D(v.y, -v.x));
+                temp.Add(new Vector2D(-v.y, v.x));
+                temp.Add(new Vector2D(v.y, v.x));
+                temp.Add(new Vector2D(-v.y, -v.x));
+            }
+            temp.OrderBy(v => v.x);
+            temp = temp.Distinct().ToList();
+            foreach (Vector2D v in temp)
+            {
+                if (float.IsNaN(v.y) || float.IsNaN(v.x)) continue;
+                int step = (int)MathF.Sign(v.y);
+                for (int i = (int)v.y; i > -v.y; i -= step)
+                {
+                    _filled.Add(new Vector2D(v.x, i));
+                }
+            }
+            filled = _filled.Distinct().ToArray();
+            return temp.ToArray();
+        }
+        public static Vector2D[] GetLinePoints(Vector2D from, Vector2D to)
+        {
+            List<Vector2D> result = new();
+            int dx = (int)MathF.Abs(to.x - from.x);
+            int sx = from.x < to.x ? 1 : -1;
+            int dy = -(int)MathF.Abs(to.y - from.y);
+            int sy = from.y < to.y ? 1 : -1;
+            int error = dx + dy;
+            int x = (int)from.x, y = (int)from.y;
+            while (true)
+            {
+                result.Add(new Vector2D(x, y));
+                if (x == (int)to.x && y == (int)to.y) break;
+                int e = 2 * error;
+                if (e >= dy)
+                {
+                    if (x == (int)to.x) break;
+                    error += dy;
+                    x += sx;
+                }
+                if (e <= dx)
+                {
+                    if (y == (int)to.y) break;
+                    error += dx;
+                    y += sy;
+                }
+            }
+            return result.ToArray();
         }
     }
     public abstract class Shape2D : ITransform
@@ -340,8 +479,8 @@ namespace TahsinsLibrary.Geometry
             }
             return temp.ToArray();
         }
-        public abstract bool InSegment(Vector2D point);
-        public abstract (float, float, float, float) GetSegment();
+        public abstract bool InBoundingBox(Vector2D point);
+        public abstract (float, float, float, float) GetBoundingBox();
         public abstract bool IsPointInside(Vector2D point);
         public abstract void Normalize();
 
@@ -393,8 +532,9 @@ namespace TahsinsLibrary.Geometry
         {
             width -= 1;
             height -= 1;
-            (float, float, float, float) segment = Vector2D.GetSegment(points);
-            Vector2D scale = new Vector2D(width / MathF.Abs(segment.Item2 - segment.Item1), height / MathF.Abs(segment.Item4 - segment.Item3));
+            (float, float, float, float) bb = Vector2D.GetBoundingBox(points);
+            Console.WriteLine(bb);
+            Vector2D scale = new Vector2D((float)width / MathF.Abs(bb.Item2 - bb.Item1), (float)height / MathF.Abs(bb.Item4 - bb.Item3));
             List<Vector2D> temp = new List<Vector2D>();
             foreach (Vector2D v in points)
             {
@@ -405,8 +545,8 @@ namespace TahsinsLibrary.Geometry
             {
                 temp[i] -= center;
             }
-            segment = Vector2D.GetSegment(temp.ToArray());
-            Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+            bb = Vector2D.GetBoundingBox(temp.ToArray());
+            Vector2D offset = new Vector2D(bb.Item1, bb.Item3);
             for (int i = 0; i < temp.Count; i++)
             {
                 temp[i] -= offset;
@@ -419,8 +559,8 @@ namespace TahsinsLibrary.Geometry
             {
                 width -= 1;
                 height -= 1;
-                (float, float, float, float) segment = Vector2D.GetSegment(points);
-                float scale = MathF.Min(width / MathF.Abs(segment.Item2 - segment.Item1), height / MathF.Abs(segment.Item4 - segment.Item3));
+                (float, float, float, float) bb = Vector2D.GetBoundingBox(points);
+                float scale = MathF.Min(width / MathF.Abs(bb.Item2 - bb.Item1), height / MathF.Abs(bb.Item4 - bb.Item3));
                 List<Vector2D> temp = new List<Vector2D>();
                 foreach (Vector2D v in points)
                 {
@@ -431,8 +571,8 @@ namespace TahsinsLibrary.Geometry
                 {
                     temp[i] -= center;
                 }
-                segment = Vector2D.GetSegment(temp.ToArray());
-                Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+                bb = Vector2D.GetBoundingBox(temp.ToArray());
+                Vector2D offset = new Vector2D(bb.Item1, bb.Item3);
                 for (int i = 0; i < temp.Count; i++)
                 {
                     temp[i] -= offset;
@@ -502,7 +642,7 @@ namespace TahsinsLibrary.Geometry
             return result.ToArray();
         }
         //xMin,xMax,yMin,yMax
-        public override (float, float, float, float) GetSegment()
+        public override (float, float, float, float) GetBoundingBox()
         {
 
             float xMin = Compare.Min(new float[] { pointA.x, pointB.x, pointC.x });
@@ -514,16 +654,16 @@ namespace TahsinsLibrary.Geometry
 
         public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = Smooth(quality) };
 
-        public override bool InSegment(Vector2D point)
+        public override bool InBoundingBox(Vector2D point)
         {
-            (float, float, float, float) segment = GetSegment();
+            (float, float, float, float) bb = GetBoundingBox();
             float x = point.x, y = point.y;
-            return !(x < segment.Item1 || x > segment.Item2 || y < segment.Item3 || y > segment.Item4);
+            return !(x < bb.Item1 || x > bb.Item2 || y < bb.Item3 || y > bb.Item4);
         }
 
         public override bool IsPointInside(Vector2D point)
         {
-            if (!InSegment(point)) return false;
+            if (!InBoundingBox(point)) return false;
             Vector2D a = pointA;
             Vector2D b = pointB;
             Vector2D c = pointC;
@@ -595,7 +735,6 @@ namespace TahsinsLibrary.Geometry
         }
         public Triangle[] TriangulatePolygon()
         {
-            Console.WriteLine("Triangulation Process Began");
             List<int> indexList = new List<int>();
             List<Triangle> triangles = new List<Triangle>();
             for (int i = 0; i < vertices.Length; i++)
@@ -626,7 +765,6 @@ namespace TahsinsLibrary.Geometry
                     }
                 }
             }
-            Console.WriteLine("Triangulation Process Ended");
             return triangles.ToArray();
         }
         public void OrderVertices()
@@ -670,7 +808,7 @@ namespace TahsinsLibrary.Geometry
         }
         public override bool IsPointInside(Vector2D point)
         {
-            if (!InSegment(point)) return false;
+            if (!InBoundingBox(point)) return false;
             foreach (Triangle triangle in TriangulatePolygon())
             {
                 if (triangle.IsPointInside(point)) return true;
@@ -690,14 +828,14 @@ namespace TahsinsLibrary.Geometry
             return lines;
         }
 
-        public override bool InSegment(Vector2D point)
+        public override bool InBoundingBox(Vector2D point)
         {
-            (float, float, float, float) segment = GetSegment();
+            (float, float, float, float) bb = GetBoundingBox();
             float x = point.x, y = point.y;
-            return !(x < segment.Item1 || x > segment.Item2 || y < segment.Item3 || y > segment.Item4);
+            return !(x < bb.Item1 || x > bb.Item2 || y < bb.Item3 || y > bb.Item4);
         }
 
-        public override (float, float, float, float) GetSegment()
+        public override (float, float, float, float) GetBoundingBox()
         {
             List<float> temp = new List<float>();
             foreach (Vector2D vector in points)
@@ -726,6 +864,26 @@ namespace TahsinsLibrary.Geometry
         }
 
         public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = Smooth(quality) };
+        public Line2D[] GetDiagonals()
+        {
+            Line2D[] diagonals = new Line2D[vertices.Length];
+            diagonals[0] = new Line2D(vertices[^1], vertices[1]);
+            for (int i = 1; i < diagonals.Length - 1; i++)
+                diagonals[i] = new Line2D(vertices[i - 1], vertices[i + 1]);
+            diagonals[^1] = new Line2D(vertices[0], vertices[^1]);
+            return diagonals;
+        }
+        public bool[] IsAnglesInterior()
+        {
+            Line2D[] diagonals = GetDiagonals();
+            bool[] result = new bool[vertices.Length];
+            result[0] = diagonals[0].IntersectingWith(diagonals[^1]) || diagonals[0].IntersectingWith(diagonals[1]);
+            for (int i = 1; i < diagonals.Length - 1; i++)
+                result[i] = diagonals[i].IntersectingWith(diagonals[i - 1]) || diagonals[i].IntersectingWith(diagonals[i + 1]);
+            result[^1] = diagonals[^1].IntersectingWith(diagonals[^2]) || diagonals[^1].IntersectingWith(diagonals[0]);
+            foreach (bool b in result) Console.WriteLine(b);
+            return result;
+        }
     }
     public class Circle2D : Shape2D
     {
@@ -758,11 +916,11 @@ namespace TahsinsLibrary.Geometry
                 return result;
             }
         }
-        public override (float, float, float, float) GetSegment() => (-radius, radius, -radius, radius);
+        public override (float, float, float, float) GetBoundingBox() => (-radius, radius, -radius, radius);
 
         public override FreePolygon2D GetSmoothVersion(int quality) => new FreePolygon2D() { vertices = points };
 
-        public override bool InSegment(Vector2D point) => point.x < radius && point.x > -radius && point.y < radius && point.y > -radius;
+        public override bool InBoundingBox(Vector2D point) => point.x < radius && point.x > -radius && point.y < radius && point.y > -radius;
 
         public override bool IsPointInside(Vector2D point) => MathF.Sqrt(point.x * point.x + point.y * point.y) < radius;
 
@@ -1034,8 +1192,8 @@ namespace TahsinsLibrary.Geometry
             width--;
             height--;
             List<Vector2D> result = new List<Vector2D>();
-            (float, float, float, float) segment = GetSegment();
-            Vector2D scale = new Vector2D((float)width / MathF.Abs(segment.Item2 - segment.Item1), (float)height / MathF.Abs(segment.Item4 - segment.Item3));
+            (float, float, float, float) bb = GetBoundingBox();
+            Vector2D scale = new Vector2D((float)width / MathF.Abs(bb.Item2 - bb.Item1), (float)height / MathF.Abs(bb.Item4 - bb.Item3));
             List<Line2D> lines = new List<Line2D>();
             foreach (Shape2D shape in group)
             {
@@ -1053,8 +1211,8 @@ namespace TahsinsLibrary.Geometry
                 result.Add(points[^1]);
                 lines.Add(new Line2D() { from = points[0], to = points[^1] });
             }
-            segment = Vector2D.GetSegment(result.ToArray());
-            scale = new Vector2D((float)width / MathF.Abs(segment.Item2 - segment.Item1), (float)height / MathF.Abs(segment.Item4 - segment.Item3));
+            bb = Vector2D.GetBoundingBox(result.ToArray());
+            scale = new Vector2D((float)width / MathF.Abs(bb.Item2 - bb.Item1), (float)height / MathF.Abs(bb.Item4 - bb.Item3));
             for (int i = 0; i < lines.Count; i++)
             {
                 lines[i].from = new Vector2D(scale.x * lines[i].from.x, scale.y * lines[i].from.y);
@@ -1068,8 +1226,8 @@ namespace TahsinsLibrary.Geometry
                     result.Add(v);
                 }
             }
-            segment = Vector2D.GetSegment(result.ToArray());
-            Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+            bb = Vector2D.GetBoundingBox(result.ToArray());
+            Vector2D offset = new Vector2D(bb.Item1, bb.Item3);
             for (int i = 0; i < result.Count; i++)
             {
                 result[i] -= offset;
@@ -1083,8 +1241,8 @@ namespace TahsinsLibrary.Geometry
                 width--;
                 height--;
                 List<Vector2D> result = new List<Vector2D>();
-                (float, float, float, float) segment = GetSegment();
-                float scale = MathF.Min(width / (segment.Item2 - segment.Item1), height / (segment.Item4 - segment.Item3));
+                (float, float, float, float) bb = GetBoundingBox();
+                float scale = MathF.Min(width / (bb.Item2 - bb.Item1), height / (bb.Item4 - bb.Item3));
                 List<Line2D> lines = new List<Line2D>();
                 foreach (Shape2D shape in group)
                 {
@@ -1102,8 +1260,8 @@ namespace TahsinsLibrary.Geometry
                     result.Add(points[^1]);
                     lines.Add(new Line2D() { from = points[0], to = points[^1] });
                 }
-                segment = Vector2D.GetSegment(result.ToArray());
-                scale = MathF.Min(width / (segment.Item2 - segment.Item1), height / (segment.Item4 - segment.Item3));
+                bb = Vector2D.GetBoundingBox(result.ToArray());
+                scale = MathF.Min(width / (bb.Item2 - bb.Item1), height / (bb.Item4 - bb.Item3));
                 for (int i = 0; i < lines.Count; i++)
                 {
                     lines[i].from = new Vector2D(scale * lines[i].from.x, scale * lines[i].from.y);
@@ -1117,8 +1275,8 @@ namespace TahsinsLibrary.Geometry
                         result.Add(v);
                     }
                 }
-                segment = Vector2D.GetSegment(result.ToArray());
-                Vector2D offset = new Vector2D(segment.Item1, segment.Item3);
+                bb = Vector2D.GetBoundingBox(result.ToArray());
+                Vector2D offset = new Vector2D(bb.Item1, bb.Item3);
                 for (int i = 0; i < result.Count; i++)
                 {
                     result[i] -= offset;
@@ -1143,15 +1301,15 @@ namespace TahsinsLibrary.Geometry
             }
             return temp.ToArray();
         }
-        public (float, float, float, float)[] GetSegments()
+        public (float, float, float, float)[] GetBoundingBoxes()
         {
-            List<(float, float, float, float)> segments = new List<(float, float, float, float)>();
+            List<(float, float, float, float)> bbs = new List<(float, float, float, float)>();
             foreach (Shape2D shape in group)
             {
-                segments.Add(shape.GetSegment());
+                bbs.Add(shape.GetBoundingBox());
             }
-            return segments.ToArray();
+            return bbs.ToArray();
         }
-        public (float, float, float, float) GetSegment() => Vector2D.GetSegment(GetSegments());
+        public (float, float, float, float) GetBoundingBox() => Vector2D.GetBoundingBox(GetBoundingBoxes());
     }
 }

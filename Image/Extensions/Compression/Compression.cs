@@ -82,45 +82,80 @@ namespace TahsinsLibrary.Compression
     }
     public static class Compression
     {
-        public static HuffmanNode<T> Huffman<T>(T[] data)
+        public static T[] Huffman<T>(ICollection<T> source)
         {
-            Dictionary<T, int> dataQuantity = new Dictionary<T, int>();
-            foreach (T t in data)
+            Dictionary<T, int> data = new Dictionary<T, int>();
+            foreach (T t in source)
             {
-                if (!dataQuantity.TryAdd(t, 1))
+                if (data.ContainsKey(t)) data[t]++;
+                else data.Add(t, 1);
+            }
+            data.OrderBy(key => key.Value);
+            T[] result = data.Keys.ToArray();
+            return result;
+        }
+        public static T[] Huffman<T>(ICollection<T> source, out Dictionary<T, bool[]> way)
+        {
+            Dictionary<T, int> data = new Dictionary<T, int>();
+            foreach (T t in source)
+            {
+                if (data.ContainsKey(t)) data[t]++;
+                else data.Add(t, 1);
+            }
+            data.OrderBy(key => key.Value);
+            T[] result = data.Keys.ToArray();
+            way = new Dictionary<T, bool[]>();
+            return result;
+        }
+        public static (int, int, T)[] LZ77<T>(ICollection<T> source)
+        {
+            List<T> temp = new List<T>(source), match = new List<T>(), window = new List<T>();
+            List<(int, int, T)> result = new List<(int, int, T)>();
+            int d = 0;
+            int l = 0;
+            T t = default;
+            while (temp.Count > 0)
+            {
+                if (window.Count > 0)
                 {
-                    dataQuantity[t]++;
+                    l = match.Count;
+                    t = match[0];
+                }
+                else
+                {
+                    d = 0;
+                    l = 0;
+                    t = temp[0];
+                }
+                result.Add((d, l, t));
+
+            }
+            return null;
+        }
+        public static T[] LongestCommonSubsequence<T>(ICollection<T> source)
+        {
+            int[,] temp = new int[source.Count + 1, source.Count + 1];
+            T[] ts = new T[source.Count];
+            source.CopyTo(ts, 0);
+            for (int i = 1; i <= temp.GetLength(0); i++)
+            {
+                for (int j = 1; j <= temp.GetLength(1); j++)
+                {
+                    if (ts[i - 1].Equals(ts[j - 1])) temp[i, j] = temp[i - 1, j - 1] + 1;
+                    else temp[i, j] = (int)MathF.Max(temp[i - 1, j], temp[i, j - 1]);
                 }
             }
-            List<KeyValuePair<T, int>> quantity = new List<KeyValuePair<T, int>>();
-            foreach (KeyValuePair<T, int> pair in dataQuantity.OrderBy(key => key.Value))
+            List<T> result = new List<T>();
+            int max = 0;
+            for (int i = 1; i < temp.GetLength(0); i++)
             {
-                quantity.Add(pair);
-            }
-            List<HuffmanNode<T>> list = new List<HuffmanNode<T>>();
-            foreach (KeyValuePair<T, int> i in quantity)
-            {
-                list.Add(new HuffmanNode<T>(i.Key, i.Value));
-            }
-            while (list.Count > 1)
-            {
-                HuffmanNode<T> node0 = list[^0];
-                HuffmanNode<T> node1 = list[^1];
-                list.RemoveAt(list.Count - 1);
-                list.RemoveAt(list.Count - 1);
-                list.Add(node1.UniteWith(node0));
-                list.Sort((i, j) => i.count.CompareTo(j.count));
-                list.Reverse();
-            }
-            return list[0];
-        }
-        public static HuffmanNode<T> Huffman<T>(List<T> data) => Huffman<T>(data.ToArray());
-        public static string[] LZ77(List<char> list)
-        {
-            List<string> result = new List<string>();
-            while (list.Count > 0)
-            {
-
+                for (int j = 1; j < temp.GetLength(1); j++)
+                {
+                    if (max < temp[i, j])
+                    {
+                        
+                    }
+                }
             }
             return result.ToArray();
         }
