@@ -138,7 +138,7 @@ namespace TahsinsLibrary.Geometry
             float m1 = p12.y / p12.x, m2 = p23.y / p23.x;
             return m1 == m2 ? Orientation.CoLinear : m1 > m2 ? Orientation.ClockWise : Orientation.CounterClockWise;
         }
-        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs((x - point.x) + (y - point.y)));
+        public float Distance(Vector2D point) => MathF.Sqrt(MathF.Abs(MathF.Pow(x - point.x, 2f) + MathF.Pow(y - point.y, 2f)));
         public static Vector2D Center(params Vector2D[] vectors)
         {
             Vector2D center = new Vector2D();
@@ -386,6 +386,15 @@ namespace TahsinsLibrary.Geometry
             }
             return result.ToArray();
         }
+        public Vector2D Round(int digits) => new Vector2D(float.Round(x, digits), float.Round(y, digits));
+        public static float Dot(Vector2D a, Vector2D b) => a.x * b.x + a.y * b.y;
+        public float Dot(Vector2D v) => Dot(this, v);
+        public static float Slope(Vector2D a, Vector2D b) => (b.y - a.y) / (b.x - a.x);
+        public float Slope(Vector2D point) => Slope(this, point);
+        public static Vector2D Direction(Vector2D a, Vector2D b) => b - a;
+        public Vector2D Direction(Vector2D point) => Direction(this, point);
+        public static Vector2D Normal(Vector2D a, Vector2D b) => new Vector2D(b.y - a.y, -(b.x - a.x));
+        public Vector2D Normal(Vector2D point) => Vector2D.Normal(this, point);
     }
     public abstract class Shape2D : ITransform
     {
@@ -692,7 +701,37 @@ namespace TahsinsLibrary.Geometry
                 new(){from = pointC, to = pointA}
             };
         }
-
+        public Vector2D[] SubdivideToPoints(int subdivision)
+        {
+            if (subdivision < 1) return new Vector2D[0];
+            List<Vector2D> result = new List<Vector2D>();
+            for (int i = 0; i <= subdivision; i++)
+            {
+                for (int j = 0; j <= subdivision; j++)
+                {
+                    if (((float)i + (float)j) / subdivision > 1) continue;
+                    result.Add(Vector2D.Interpolate(pointA, pointB, (float)i / subdivision) + Vector2D.Interpolate(pointA, pointC, (float)j / subdivision) - pointA);
+                }
+            }
+            return result.ToArray();
+        }
+        public Vector2D[] SubdivideToPoints(float distance)
+        {
+            if (distance <= 0) return new Vector2D[0];
+            List<Vector2D> result = new List<Vector2D>();
+            /*float ab = pointA.Distance(pointB), ac = pointA.Distance(pointC);
+            int t0 = (int)(ab / distance), t1 = (int)(ac / distance);
+            for (int i = 0; i <= t0; i++)
+            {
+                for (int j = 0; j <= t1; j++)
+                {
+                    float x = (float)i / t0, y = (float)j / t1;
+                    if (x + y > 1f) continue;
+                    result.Add(Vector2D.Interpolate(pointA, pointB, (float)i / t0) + Vector2D.Interpolate(pointA, pointC, (float)j / t1) - pointA);
+                }
+            }*/
+            return result.ToArray();
+        }
     }
     public class FreePolygon2D : Shape2D
     {
@@ -885,7 +924,7 @@ namespace TahsinsLibrary.Geometry
             return result;
         }
     }
-    public class Circle2D : Shape2D
+    public class Circle : Shape2D
     {
         public int resolution;
         public float radius;
@@ -939,8 +978,42 @@ namespace TahsinsLibrary.Geometry
             list.Add(new Line2D() { from = points[0], to = points[^1] });
             return list.ToArray();
         }
+        public override Vector2D[] GetOutlines()
+        {
+            List<Vector2D> result = new List<Vector2D>() { };
+            float t1 = radius / 16f, x = radius, y = 0f;
+            while (x > y)
+            {
+                result.Add(new Vector2D(x, y));
+                result.Add(new Vector2D(-x, y));
+                result.Add(new Vector2D(x, -y));
+                result.Add(new Vector2D(-x, -y));
+                result.Add(new Vector2D(y, x));
+                result.Add(new Vector2D(-y, x));
+                result.Add(new Vector2D(y, -x));
+                result.Add(new Vector2D(-y, -x));
+                y += 1f;
+                t1 += y;
+                float t2 = t1 - x;
+                if (t2 > 0)
+                {
+                    t1 = t2;
+                    x = x - 1;
+                }
+            }
+            return result.ToArray();
+        }
+        public override Vector2D[] GetTransformedOutlines()
+        {
+            Vector2D[] result = GetOutlines();
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] += offset;
+            }
+            return result;
+        }
     }
-    public class ColorWheel : Circle2D
+    public class ColorWheel : Circle
     {
         public Dictionary<int, Color> colorReferences = new Dictionary<int, Color>();
         public Dictionary<Color, Vector2D[]> GetColorScheme()
@@ -992,7 +1065,7 @@ namespace TahsinsLibrary.Geometry
         public Vector2D from;
         public Vector2D to;
         public Vector2D centroid => (from + to) / 2f;
-
+        public Vector2D normal => Vector2D.Normal(from, to);
         public float rotation { get; set; }
         public Vector2D offset { get; set; }
 
